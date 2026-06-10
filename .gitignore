@@ -1,0 +1,3 @@
+data/processed/west/*
+data/raw/west/*
+.venv/
