@@ -1,3 +1,4 @@
-data/processed/west/*
-data/raw/west/*
+data/processed/west/
+data/raw/*
 .venv/
+src/west/
