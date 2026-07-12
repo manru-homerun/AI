@@ -2,8 +2,8 @@
 name: Model Experiment
 about: 모델, Feature, Loss, 하이퍼파라미터 실험
 title: ''
-labels: ''
-assignees: ''
+labels: experiment
+assignees: thisischeese
 
 ---
 

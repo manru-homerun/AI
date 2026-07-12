@@ -2,8 +2,8 @@
 name: Task / Feature
 about: 기능 개발, 데이터 처리, 리팩터링 작업
 title: ''
-labels: ''
-assignees: ''
+labels: enhancement
+assignees: thisischeese
 
 ---
 
