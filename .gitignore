@@ -1,4 +1,9 @@
-data/processed/west/
-data/raw/*
+.env
 .venv/
+.agents/
+models/
+data/processed/west/
+data/preprocessed/prev
+data/raw/*
 src/west/
+*.pyc
