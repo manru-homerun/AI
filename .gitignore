@@ -2,8 +2,8 @@
 .venv/
 .agents/
 models/
-data/processed/west/
-data/preprocessed/prev
+data/processed/*
 data/raw/*
 src/west/
 *.pyc
+Agents.md
