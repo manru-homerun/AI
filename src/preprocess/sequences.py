@@ -27,8 +27,34 @@ def legal_dong_code(lotno_cd: Any, sgg_cd: Any) -> Any:
 
 
 def build_travel_seq(visit: pd.DataFrame, travel: pd.DataFrame) -> pd.DataFrame:
-    available_visit_columns = [column for column in VISIT_LOCATION_COLUMNS if column in visit.columns]
-    seq = visit[available_visit_columns].merge(
+    required_visit_columns = [
+        "VISIT_AREA_ID",
+        "TRAVEL_ID",
+        "VISIT_ORDER",
+        "VISIT_AREA_NM",
+        "VISIT_START_YMD",
+    ]
+    optional_visit_columns = [
+        column for column in VISIT_LOCATION_COLUMNS if column not in required_visit_columns
+    ]
+
+    missing_required_visit_columns = [
+        column for column in required_visit_columns if column not in visit.columns
+    ]
+    if missing_required_visit_columns:
+        raise ValueError(
+            "visit table is missing required columns: "
+            + ", ".join(missing_required_visit_columns)
+        )
+
+    visit_location = visit[required_visit_columns].copy()
+    for column in optional_visit_columns:
+        if column in visit.columns:
+            visit_location[column] = visit[column]
+        else:
+            visit_location[column] = pd.Series(pd.NA, index=visit.index)
+
+    seq = visit_location[VISIT_LOCATION_COLUMNS].merge(
         travel[["TRAVEL_ID", "TRAVEL_START_YMD"]],
         on="TRAVEL_ID",
         how="inner",

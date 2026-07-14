@@ -9,7 +9,7 @@
 {"keyword_norm": "갈마역 대전 1호선", "keyword": "갈마역 대전 1호선", "status": "api_error", "items": [], "error": "HTTPError: HTTP Error 401: Unauthorized", "api_key_name": "T2_DATA_OPENAPI_KEY"}
 {"keyword_norm": "개천 식당", "keyword": "개천 식당", "status": "api_error", "items": [], "error": "HTTPError: HTTP Error 401: Unauthorized", "api_key_name": "T2_DATA_OPENAPI_KEY"}
 {"keyword_norm": "갤러리아백화점 타임월드점", "keyword": "갤러리아백화점 타임월드점", "status": "api_error", "items": [], "error": "HTTPError: HTTP Error 401: Unauthorized", "api_key_name": "T2_DATA_OPENAPI_KEY"}
-{"keyword_norm": "계룡스파텔", "keyword": "계룡스파텔", "status": "api_error", "items": [], "error": "HTTPError: HTTP Error 401: Unauthorized", "api_key_name": "T2_DATA_OPENAPI_KEY"}
+{"keyword_norm": "계룡스파텔", "keyword": "계룡스파텔", "status": "api_error", "items": [], "error": "HTTPError: HTTP Error 4)01: Unauthorized", "api_key_name": "T2_DATA_OPENAPI_KEY"}
 {"keyword_norm": "계족산 황톳길", "keyword": "계족산 황톳길", "status": "api_error", "items": [], "error": "HTTPError: HTTP Error 401: Unauthorized", "api_key_name": "T2_DATA_OPENAPI_KEY"}
 {"keyword_norm": "고베규카츠 대전은행점", "keyword": "고베규카츠 대전은행점", "status": "api_error", "items": [], "error": "HTTPError: HTTP Error 401: Unauthorized", "api_key_name": "T2_DATA_OPENAPI_KEY"}
 {"keyword_norm": "고소한 식물원", "keyword": "고소한 식물원", "status": "api_error", "items": [], "error": "HTTPError: HTTP Error 401: Unauthorized", "api_key_name": "T2_DATA_OPENAPI_KEY"}
