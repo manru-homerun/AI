@@ -145,9 +145,73 @@ def score_candidate(row: pd.Series, candidate: dict[str, Any]) -> float:
     )
 
 
+def location_fallback_key(row: pd.Series, radius: Any) -> str | None:
+    row_lon = safe_float(row.get("X_COORD"))
+    row_lat = safe_float(row.get("Y_COORD"))
+    if row_lon is None or row_lat is None:
+        return None
+    try:
+        radius_int = int(radius)
+    except (TypeError, ValueError):
+        return None
+    return f"{row_lon:.6f},{row_lat:.6f},r{radius_int}"
+
+
+def title_contains_place_name(row: pd.Series, candidate: dict[str, Any]) -> bool:
+    source = normalize_for_match(row.get("visit_area_nm"))
+    title = normalize_for_match(candidate.get("title"))
+    return bool(source and title and (source in title or title in source))
+
+
+def candidate_distance_m(candidate: dict[str, Any]) -> float:
+    distance = safe_float(candidate.get("dist"))
+    if distance is None:
+        return float("inf")
+    return distance
+
+
+def best_location_fallback_match(
+    row: pd.Series,
+    cache_record: dict[str, Any],
+    location_radius: int,
+) -> tuple[Any, Any, str, Any]:
+    fallbacks = cache_record.get("location_fallbacks") or {}
+    fallback_key = location_fallback_key(row, location_radius)
+    fallback_record = fallbacks.get(fallback_key) if fallback_key else None
+
+    if fallback_record is None:
+        return pd.NA, pd.NA, "no_result", pd.NA
+    if fallback_record.get("status") == "api_error":
+        return pd.NA, pd.NA, "location_api_error", pd.NA
+
+    candidates = fallback_record.get("items") or []
+    if not candidates:
+        return pd.NA, pd.NA, "location_no_result", pd.NA
+
+    scored = [
+        (
+            title_contains_place_name(row, candidate),
+            score_candidate(row, candidate),
+            -candidate_distance_m(candidate),
+            candidate,
+        )
+        for candidate in candidates
+    ]
+    _, score, _, candidate = max(scored, key=lambda item: item[:3])
+    if score < MATCH_THRESHOLD:
+        return pd.NA, pd.NA, "location_low_score", score
+
+    content_id = candidate.get("contentid")
+    content_type_id = candidate.get("contenttypeid")
+    if not content_id or not content_type_id:
+        return pd.NA, pd.NA, "location_api_error", score
+    return str(content_id), str(content_type_id), "matched_location", score
+
+
 def best_tourapi_match(
     row: pd.Series,
     keyword_cache: dict[str, dict[str, Any]],
+    location_radius: int,
 ) -> tuple[Any, Any, str, Any]:
     if pd.isna(row.get("X_COORD")) or pd.isna(row.get("Y_COORD")):
         return pd.NA, pd.NA, "missing_coord", pd.NA
@@ -164,7 +228,7 @@ def best_tourapi_match(
 
     candidates = cache_record.get("items") or []
     if not candidates:
-        return pd.NA, pd.NA, "no_result", pd.NA
+        return best_location_fallback_match(row, cache_record, location_radius)
 
     scored = [(score_candidate(row, candidate), candidate) for candidate in candidates]
     score, candidate = max(scored, key=lambda item: item[0])

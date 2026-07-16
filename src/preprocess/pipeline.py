@@ -12,7 +12,7 @@ from .io import load_all_tables, read_env_keys, save_outputs
 from .matching import best_tourapi_match
 from .sequences import build_travel_seq
 from .targeting import load_private_place_patterns, mark_tourapi_scope
-from .tourapi import populate_tourapi_cache
+from .tourapi import populate_tourapi_cache, populate_tourapi_location_fallbacks
 from .validation import validate_outputs
 
 
@@ -25,6 +25,7 @@ class PipelineOptions:
     api_key_names: list[str] | None
     cache_path: Path | None
     tourapi_base_url: str
+    tourapi_location_base_url: str
     call_tourapi: bool
     tourapi_target: str
     private_place_pattern_path: Path | None
@@ -32,6 +33,7 @@ class PipelineOptions:
     max_api_calls: int | None
     allow_partial_api: bool
     retry_api_errors: bool
+    retry_empty_results: bool
     skip_tourapi: bool
     request_sleep: float
     request_timeout: float
@@ -39,6 +41,7 @@ class PipelineOptions:
     retry_sleep: float
     parallel_workers: int
     num_rows: int
+    location_radius: int
 
 
 def restore_existing_matches(travel_seq: pd.DataFrame, existing_path: Path) -> pd.DataFrame:
@@ -102,6 +105,7 @@ def attach_tourapi_matches(
     service_keys: list[tuple[str, str]],
     service_key_names: list[str],
     base_url: str,
+    location_base_url: str,
     tourapi_target: str,
     private_place_pattern_path: Path | None,
     max_api_calls: int | None,
@@ -114,6 +118,8 @@ def attach_tourapi_matches(
     retry_sleep: float,
     parallel_workers: int,
     retry_api_errors: bool,
+    retry_empty_results: bool,
+    location_radius: int,
     skip_tourapi: bool,
 ) -> pd.DataFrame:
     travel_seq = travel_seq.copy()
@@ -149,9 +155,26 @@ def attach_tourapi_matches(
         parallel_workers=parallel_workers,
         retry_api_errors=retry_api_errors,
     )
+    if retry_empty_results:
+        keyword_cache = populate_tourapi_location_fallbacks(
+            travel_seq=travel_seq.loc[query_mask],
+            cache_path=cache_path,
+            cache=keyword_cache,
+            service_keys=service_keys,
+            base_url=location_base_url,
+            max_api_calls=max_api_calls,
+            allow_partial_api=allow_partial_api,
+            request_sleep=request_sleep,
+            timeout=timeout,
+            num_rows=num_rows,
+            retries=retries,
+            retry_sleep=retry_sleep,
+            parallel_workers=parallel_workers,
+            radius=location_radius,
+        )
 
     matches = travel_seq.loc[travel_seq["TOURAPI_MATCH_STATUS"].eq("not_queried")].apply(
-        lambda row: best_tourapi_match(row, keyword_cache),
+        lambda row: best_tourapi_match(row, keyword_cache, location_radius),
         axis=1,
     )
     match_df = pd.DataFrame(
@@ -208,6 +231,7 @@ def process_total(options: PipelineOptions | Any) -> tuple[pd.DataFrame, pd.Data
         service_keys=service_keys,
         service_key_names=service_key_names,
         base_url=options.tourapi_base_url,
+        location_base_url=options.tourapi_location_base_url,
         tourapi_target=options.tourapi_target,
         private_place_pattern_path=options.private_place_pattern_path,
         max_api_calls=options.max_api_calls,
@@ -220,6 +244,8 @@ def process_total(options: PipelineOptions | Any) -> tuple[pd.DataFrame, pd.Data
         retry_sleep=options.retry_sleep,
         parallel_workers=options.parallel_workers,
         retry_api_errors=options.retry_api_errors,
+        retry_empty_results=options.retry_empty_results,
+        location_radius=options.location_radius,
         skip_tourapi=options.skip_tourapi or not options.call_tourapi,
     )
 

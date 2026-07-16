@@ -3,6 +3,8 @@ from __future__ import annotations
 REGIONS = ("central", "east", "west")
 ZIP_NAMES = ("TL_csv.zip", "VL_csv.zip")
 TOURAPI_BASE_URL = "https://apis.data.go.kr/B551011/KorService2/searchKeyword2"
+TOURAPI_LOCATION_BASE_URL = "https://apis.data.go.kr/B551011/KorService2/locationBasedList2"
+TOURAPI_LOCATION_RADIUS = 500
 MATCH_THRESHOLD = 0.62
 MAX_PARALLEL_WORKERS = 5
 

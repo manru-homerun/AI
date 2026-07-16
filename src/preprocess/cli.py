@@ -3,7 +3,12 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from .config import TOURAPI_BASE_URL, TOURAPI_TARGET_CONFIGS
+from .config import (
+    TOURAPI_BASE_URL,
+    TOURAPI_LOCATION_BASE_URL,
+    TOURAPI_LOCATION_RADIUS,
+    TOURAPI_TARGET_CONFIGS,
+)
 from .pipeline import PipelineOptions, process_total
 
 
@@ -16,6 +21,7 @@ def parse_args() -> PipelineOptions:
     parser.add_argument("--api-key-names", nargs="+", default=None)
     parser.add_argument("--cache-path", type=Path, default=None)
     parser.add_argument("--tourapi-base-url", default=TOURAPI_BASE_URL)
+    parser.add_argument("--tourapi-location-base-url", default=TOURAPI_LOCATION_BASE_URL)
     parser.add_argument("--call-tourapi", action="store_true")
     parser.add_argument(
         "--tourapi-target",
@@ -27,6 +33,7 @@ def parse_args() -> PipelineOptions:
     parser.add_argument("--max-api-calls", type=int, default=None)
     parser.add_argument("--allow-partial-api", action="store_true")
     parser.add_argument("--retry-api-errors", action="store_true")
+    parser.add_argument("--retry-empty-results", action="store_true")
     parser.add_argument("--skip-tourapi", action="store_true")
     parser.add_argument("--request-sleep", type=float, default=0.05)
     parser.add_argument("--request-timeout", type=float, default=10.0)
@@ -34,6 +41,7 @@ def parse_args() -> PipelineOptions:
     parser.add_argument("--retry-sleep", type=float, default=1.0)
     parser.add_argument("--parallel-workers", type=int, default=1)
     parser.add_argument("--num-rows", type=int, default=20)
+    parser.add_argument("--location-radius", type=int, default=TOURAPI_LOCATION_RADIUS)
     args = parser.parse_args()
     return PipelineOptions(**vars(args))
 
