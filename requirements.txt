@@ -5,3 +5,4 @@ seaborn==0.13.2
 jupyter==1.1.1
 ipykernel==6.31.0
 nbconvert==7.17.1
+scikit-learn==1.6.1
