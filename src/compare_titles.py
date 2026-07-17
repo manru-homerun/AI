@@ -259,13 +259,24 @@ def fetch_detail_common(
 def fetch_detail_common_with_keys(
     content_id: str,
     service_keys: list[tuple[str, str]],
+    start_key_index: int,
     base_url: str,
     timeout: float,
     retries: int,
     retry_sleep: float,
 ) -> dict[str, Any]:
     last_record: dict[str, Any] | None = None
-    for key_index, (key_name, service_key) in enumerate(service_keys):
+    key_count = len(service_keys)
+    if key_count == 0:
+        return {
+            "contentid": content_id,
+            "status": "api_error",
+            "items": [],
+            "error": "no API keys provided",
+        }
+
+    rotated_keys = service_keys[start_key_index % key_count :] + service_keys[: start_key_index % key_count]
+    for key_index, (key_name, service_key) in enumerate(rotated_keys):
         record = fetch_detail_common(
             content_id=content_id,
             service_key=service_key,
@@ -276,16 +287,11 @@ def fetch_detail_common_with_keys(
         )
         record["api_key_name"] = key_name
         last_record = record
-        if is_key_fallback_error(record) and key_index < len(service_keys) - 1:
+        if is_key_fallback_error(record) and key_index < key_count - 1:
             continue
         return record
 
-    return last_record or {
-        "contentid": content_id,
-        "status": "api_error",
-        "items": [],
-        "error": "no API keys provided",
-    }
+    return last_record
 
 
 def populate_detail_cache(
@@ -304,10 +310,11 @@ def populate_detail_cache(
     if not pending:
         return detail_cache
 
-    def fetch_record(content_id: str) -> dict[str, Any]:
+    def fetch_record(content_id: str, key_index: int) -> dict[str, Any]:
         return fetch_detail_common_with_keys(
             content_id=content_id,
             service_keys=service_keys,
+            start_key_index=key_index,
             base_url=base_url,
             timeout=timeout,
             retries=retries,
@@ -315,8 +322,8 @@ def populate_detail_cache(
         )
 
     if parallel_workers == 1:
-        for content_id in pending:
-            record = fetch_record(content_id)
+        for key_index, content_id in enumerate(pending):
+            record = fetch_record(content_id, key_index)
             detail_cache[content_id] = record
             append_detail_cache(detail_cache_path, record)
             if request_sleep > 0:
@@ -325,8 +332,8 @@ def populate_detail_cache(
 
     with ThreadPoolExecutor(max_workers=parallel_workers) as executor:
         future_to_content_id = {}
-        for content_id in pending:
-            future = executor.submit(fetch_record, content_id)
+        for key_index, content_id in enumerate(pending):
+            future = executor.submit(fetch_record, content_id, key_index)
             future_to_content_id[future] = content_id
             if request_sleep > 0:
                 time.sleep(request_sleep)
