@@ -1,0 +1,16 @@
+.git
+.github
+.pytest_cache
+.ruff_cache
+.venv
+__pycache__
+*.py[cod]
+*.ipynb_checkpoints
+.env
+.tmp_nbcheck
+data
+notebooks
+artifacts/tiny_gru_onnx_smoke
+artifacts/tiny_gru_prefix_ablation
+artifacts/conditional_gru_decoder_smoke
+requirements.txt

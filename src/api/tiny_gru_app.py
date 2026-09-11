@@ -95,8 +95,14 @@ def startup() -> None:
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def health() -> dict[str, Any]:
+    return {
+        "status": "ok" if RUNTIME is not None else "degraded",
+        "tiny_gru_loaded": RUNTIME is not None,
+        "course_decoder_loaded": COURSE_RUNTIME is not None,
+        "tiny_gru_artifact_dir": str(ARTIFACT_DIR),
+        "course_decoder_artifact_dir": str(COURSE_ARTIFACT_DIR),
+    }
 
 
 @app.post("/recommend", response_model=RecommendResponse)
