@@ -1,0 +1,151 @@
+{
+  "metadata": {
+    "checkpoint_path": "artifacts\\tiny_gru_onnx_experiment\\best_tiny_gru_contentid.pt",
+    "input_path": "data\\processed\\total_input.csv",
+    "sequence_path": "data\\processed\\total_travel_seq_with_contentid.csv",
+    "output_dir": "artifacts\\tiny_gru_prefix_ablation",
+    "device": "cpu",
+    "batch_size": 64,
+    "coverage": {
+      "input_rows": 7730,
+      "input_trips": 7730,
+      "sequence_rows": 71649,
+      "sequence_trips": 7730,
+      "content_rows": 4922,
+      "content_trips": 2000
+    },
+    "split_sizes": {
+      "train": 935,
+      "valid": 201,
+      "test": 201
+    },
+    "checkpoint_config": {
+      "embedding_dim": 16,
+      "hidden_dim": 48,
+      "dropout": 0.2,
+      "learning_rate": 0.001,
+      "batch_size": 64,
+      "epochs": 8,
+      "weight_decay": 1e-05
+    }
+  },
+  "conditions": [
+    {
+      "name": "full",
+      "prefix_mode": "full",
+      "prefix_last_n": null
+    },
+    {
+      "name": "last-3",
+      "prefix_mode": "last_n",
+      "prefix_last_n": 3
+    },
+    {
+      "name": "last-2",
+      "prefix_mode": "last_n",
+      "prefix_last_n": 2
+    },
+    {
+      "name": "last-1",
+      "prefix_mode": "last_n",
+      "prefix_last_n": 1
+    },
+    {
+      "name": "no-seq",
+      "prefix_mode": "none",
+      "prefix_last_n": null
+    }
+  ],
+  "results": {
+    "full": {
+      "recall@1": 0.15254237288135594,
+      "mrr@1": 0.15254237288135594,
+      "ndcg@1": 0.15254237288135594,
+      "recall@3": 0.2401129943502825,
+      "mrr@3": 0.1906779661016949,
+      "ndcg@3": 0.20335498677360933,
+      "recall@5": 0.2740112994350282,
+      "mrr@5": 0.19788135593220343,
+      "ndcg@5": 0.21684002897510948,
+      "recall@10": 0.3418079096045198,
+      "mrr@10": 0.20657564344005022,
+      "ndcg@10": 0.23841691838302428,
+      "sample_count": 354,
+      "avg_prefix_len": 2.07909604519774,
+      "min_prefix_len": 1,
+      "max_prefix_len": 8
+    },
+    "last-3": {
+      "recall@1": 0.15254237288135594,
+      "mrr@1": 0.15254237288135594,
+      "ndcg@1": 0.15254237288135594,
+      "recall@3": 0.23728813559322035,
+      "mrr@3": 0.18879472693032015,
+      "ndcg@3": 0.2012028412732056,
+      "recall@5": 0.2740112994350282,
+      "mrr@5": 0.19656308851224108,
+      "ndcg@5": 0.21578068801491632,
+      "recall@10": 0.3418079096045198,
+      "mrr@10": 0.20526185992287688,
+      "ndcg@10": 0.23735459300216022,
+      "sample_count": 354,
+      "avg_prefix_len": 1.7966101694915255,
+      "min_prefix_len": 1,
+      "max_prefix_len": 3
+    },
+    "last-2": {
+      "recall@1": 0.1497175141242938,
+      "mrr@1": 0.1497175141242938,
+      "ndcg@1": 0.1497175141242938,
+      "recall@3": 0.2401129943502825,
+      "mrr@3": 0.18879472693032015,
+      "ndcg@3": 0.20194255739507827,
+      "recall@5": 0.2796610169491525,
+      "mrr@5": 0.19726930320150657,
+      "ndcg@5": 0.21773700458332398,
+      "recall@10": 0.327683615819209,
+      "mrr@10": 0.20320262756703433,
+      "ndcg@10": 0.23279250676428256,
+      "sample_count": 354,
+      "avg_prefix_len": 1.5254237288135593,
+      "min_prefix_len": 1,
+      "max_prefix_len": 2
+    },
+    "last-1": {
+      "recall@1": 0.13559322033898305,
+      "mrr@1": 0.13559322033898305,
+      "ndcg@1": 0.13559322033898305,
+      "recall@3": 0.23163841807909605,
+      "mrr@3": 0.17843691148775895,
+      "ndcg@3": 0.19212255461057495,
+      "recall@5": 0.2711864406779661,
+      "mrr@5": 0.18719397363465157,
+      "ndcg@5": 0.20816459361146955,
+      "recall@10": 0.3248587570621469,
+      "mrr@10": 0.19373150390099544,
+      "ndcg@10": 0.22489400690473754,
+      "sample_count": 354,
+      "avg_prefix_len": 1.0,
+      "min_prefix_len": 1,
+      "max_prefix_len": 1
+    },
+    "no-seq": {
+      "recall@1": 0.1440677966101695,
+      "mrr@1": 0.1440677966101695,
+      "ndcg@1": 0.1440677966101695,
+      "recall@3": 0.22598870056497175,
+      "mrr@3": 0.18126177024482107,
+      "ndcg@3": 0.19279526786723336,
+      "recall@5": 0.2711864406779661,
+      "mrr@5": 0.19157250470809792,
+      "ndcg@5": 0.21139430366752243,
+      "recall@10": 0.3163841807909605,
+      "mrr@10": 0.19739709443099274,
+      "ndcg@10": 0.22580324585512862,
+      "sample_count": 354,
+      "avg_prefix_len": 1.0,
+      "min_prefix_len": 1,
+      "max_prefix_len": 1
+    }
+  }
+}

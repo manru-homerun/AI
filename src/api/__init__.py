@@ -1,0 +1,2 @@
+"""FastAPI app entry points."""
+

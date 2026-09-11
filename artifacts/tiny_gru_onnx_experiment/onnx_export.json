@@ -1,0 +1,7 @@
+{
+  "onnx_path": "artifacts\\tiny_gru_onnx_experiment\\model.onnx",
+  "onnx_bytes": 622549,
+  "checkpoint": "best_tiny_gru_contentid.pt",
+  "opset": 17,
+  "torch_onnx_max_abs_diff": 9.5367431640625e-07
+}
