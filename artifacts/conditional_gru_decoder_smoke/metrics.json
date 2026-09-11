@@ -1,0 +1,88 @@
+{
+  "coverage": {
+    "input_rows": 7730,
+    "input_trips": 7730,
+    "sequence_rows": 71649,
+    "sequence_trips": 7730,
+    "content_rows": 4922,
+    "content_trips": 2000
+  },
+  "usable_trips": 1337,
+  "split_sizes": {
+    "train": 935,
+    "valid": 201,
+    "test": 201
+  },
+  "sample_sizes": {
+    "train": 128,
+    "valid": 64,
+    "test": 64
+  },
+  "experiments": [
+    {
+      "config": {
+        "embedding_dim": 16,
+        "hidden_dim": 48,
+        "dropout": 0.2,
+        "learning_rate": 0.001,
+        "batch_size": 32,
+        "epochs": 1,
+        "weight_decay": 1e-05
+      },
+      "history": [
+        {
+          "epoch": 1,
+          "train_loss": 6.623897052047276,
+          "valid_loss": 6.621428428252051,
+          "epoch_seconds": 0.545650000000002,
+          "recall@1": 0.006134969325153374,
+          "mrr@1": 0.006134969325153374,
+          "ndcg@1": 0.006134969325153374,
+          "recall@3": 0.006134969325153374,
+          "mrr@3": 0.006134969325153374,
+          "ndcg@3": 0.006134969325153374,
+          "recall@5": 0.012269938650306749,
+          "mrr@5": 0.007361963190184049,
+          "ndcg@5": 0.008508299430886759,
+          "recall@10": 0.012269938650306749,
+          "mrr@10": 0.007361963190184049,
+          "ndcg@10": 0.008508299430886759
+        }
+      ],
+      "best_valid_recall@10": 0.012269938650306749,
+      "teacher_forcing_test": {
+        "recall@1": 0.006172839506172839,
+        "mrr@1": 0.006172839506172839,
+        "ndcg@1": 0.006172839506172839,
+        "recall@3": 0.012345679012345678,
+        "mrr@3": 0.009259259259259259,
+        "ndcg@3": 0.010067467614638627,
+        "recall@5": 0.024691358024691357,
+        "mrr@5": 0.011728395061728394,
+        "ndcg@5": 0.014843428197781117,
+        "recall@10": 0.030864197530864196,
+        "mrr@10": 0.012757201646090533,
+        "ndcg@10": 0.017042237994744216
+      },
+      "greedy_route_test": {
+        "route_overlap": 0.010286458333333333,
+        "position_accuracy": 0.006172839506172839,
+        "duplicate_poi_rate": 0.0,
+        "special_token_rate": 0.0,
+        "route_length_correct": 1.0,
+        "day_start_position_accuracy": 0.013888888888888888,
+        "avg_generation_latency_ms": 5.594146875000594,
+        "p95_generation_latency_ms": 11.283919999995714
+      }
+    }
+  ],
+  "best_config": {
+    "embedding_dim": 16,
+    "hidden_dim": 48,
+    "dropout": 0.2,
+    "learning_rate": 0.001,
+    "batch_size": 32,
+    "epochs": 1,
+    "weight_decay": 1e-05
+  }
+}

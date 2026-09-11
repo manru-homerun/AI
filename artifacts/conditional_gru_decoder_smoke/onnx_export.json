@@ -1,0 +1,11 @@
+{
+  "user_encoder_onnx_path": "artifacts\\conditional_gru_decoder_smoke\\course_user_encoder.onnx",
+  "decoder_step_onnx_path": "artifacts\\conditional_gru_decoder_smoke\\course_decoder_step.onnx",
+  "user_encoder_onnx_bytes": 364985,
+  "decoder_step_onnx_bytes": 263639,
+  "checkpoint": "best_conditional_gru_decoder.pt",
+  "opset": 17,
+  "torch_onnx_user_hidden_max_abs_diff": 1.4901161193847656e-08,
+  "torch_onnx_step_logits_max_abs_diff": 3.725290298461914e-08,
+  "torch_onnx_step_hidden_max_abs_diff": 5.960464477539063e-08
+}

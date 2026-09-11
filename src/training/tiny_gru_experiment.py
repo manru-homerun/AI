@@ -33,6 +33,7 @@ SEED = 42
 MIN_SEQUENCE_LEN = 2
 MAX_SEQUENCE_LEN = 20
 TOP_KS = (1, 3, 5, 10)
+PREFIX_MODES = ("full", "last_n", "none")
 
 
 def seed_everything(seed: int = SEED) -> None:
@@ -140,7 +141,14 @@ def make_next_place_samples(
     feature_encoder: ColumnTransformer,
     feature_columns: list[str],
     content_id_to_token: dict[str, int],
+    prefix_mode: str = "full",
+    prefix_last_n: int | None = None,
 ) -> list[dict]:
+    if prefix_mode not in PREFIX_MODES:
+        raise ValueError(f"prefix_mode must be one of {PREFIX_MODES}: {prefix_mode}")
+    if prefix_mode == "last_n" and (prefix_last_n is None or prefix_last_n < 1):
+        raise ValueError("prefix_last_n must be a positive integer when prefix_mode='last_n'")
+
     encoded_features = feature_encoder.transform(df[feature_columns]).astype(np.float32)
     samples: list[dict] = []
     for row_idx, row in df.reset_index(drop=True).iterrows():
@@ -149,7 +157,13 @@ def make_next_place_samples(
             label = tokens[target_pos]
             if label == content_id_to_token[UNK_TOKEN]:
                 continue
-            prefix = tokens[max(0, target_pos - MAX_SEQUENCE_LEN) : target_pos]
+            if prefix_mode == "none":
+                prefix = [content_id_to_token[UNK_TOKEN]]
+            else:
+                prefix_start = max(0, target_pos - MAX_SEQUENCE_LEN)
+                if prefix_mode == "last_n":
+                    prefix_start = max(prefix_start, target_pos - int(prefix_last_n))
+                prefix = tokens[prefix_start:target_pos]
             samples.append(
                 {
                     "trip_id": row["trip_id"],
@@ -320,6 +334,8 @@ def main() -> None:
         help='JSON config. Example: {"embedding_dim":16,"hidden_dim":32,"epochs":8}',
     )
     parser.add_argument("--smoke", action="store_true", help="Run a tiny one-epoch smoke test.")
+    parser.add_argument("--prefix-mode", choices=PREFIX_MODES, default="full")
+    parser.add_argument("--prefix-last-n", type=int, default=None)
     args = parser.parse_args()
 
     seed_everything(SEED)
@@ -333,9 +349,30 @@ def main() -> None:
     content_id_to_token, token_to_content_id = build_vocab(train_df)
     feature_encoder, feature_columns, user_feature_dim = build_feature_encoder(input_df, train_df)
 
-    train_samples = make_next_place_samples(train_df, feature_encoder, feature_columns, content_id_to_token)
-    valid_samples = make_next_place_samples(valid_df, feature_encoder, feature_columns, content_id_to_token)
-    test_samples = make_next_place_samples(test_df, feature_encoder, feature_columns, content_id_to_token)
+    train_samples = make_next_place_samples(
+        train_df,
+        feature_encoder,
+        feature_columns,
+        content_id_to_token,
+        prefix_mode=args.prefix_mode,
+        prefix_last_n=args.prefix_last_n,
+    )
+    valid_samples = make_next_place_samples(
+        valid_df,
+        feature_encoder,
+        feature_columns,
+        content_id_to_token,
+        prefix_mode=args.prefix_mode,
+        prefix_last_n=args.prefix_last_n,
+    )
+    test_samples = make_next_place_samples(
+        test_df,
+        feature_encoder,
+        feature_columns,
+        content_id_to_token,
+        prefix_mode=args.prefix_mode,
+        prefix_last_n=args.prefix_last_n,
+    )
     if args.smoke:
         train_samples = train_samples[:512]
         valid_samples = valid_samples[:256]
@@ -390,6 +427,8 @@ def main() -> None:
         "pad_token_id": content_id_to_token[PAD_TOKEN],
         "unk_token_id": content_id_to_token[UNK_TOKEN],
         "feature_columns": feature_columns,
+        "prefix_mode": args.prefix_mode,
+        "prefix_last_n": args.prefix_last_n,
     }
     torch.save(checkpoint, artifact_dir / "best_tiny_gru_contentid.pt")
     with open(artifact_dir / "content_id_vocab.json", "w", encoding="utf-8") as fp:
@@ -429,6 +468,8 @@ def main() -> None:
                 "input_path": str(args.input_path.resolve().relative_to(ROOT)),
                 "sequence_path": str(args.sequence_path.resolve().relative_to(ROOT)),
                 "best_config": best_result["config"],
+                "prefix_mode": args.prefix_mode,
+                "prefix_last_n": args.prefix_last_n,
             },
             fp,
             ensure_ascii=False,
@@ -441,4 +482,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

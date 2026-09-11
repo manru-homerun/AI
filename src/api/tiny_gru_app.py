@@ -4,12 +4,15 @@ import json
 import os
 import pickle
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
+
+from src.inference.course_generator import DEFAULT_ARTIFACT_DIR as DEFAULT_COURSE_ARTIFACT_DIR
+from src.inference.course_generator import OnnxCourseGenerator
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -30,6 +33,27 @@ class RecommendItem(BaseModel):
 
 class RecommendResponse(BaseModel):
     recommendations: list[RecommendItem]
+
+
+class GenerateCourseRequest(BaseModel):
+    user_features: dict[str, Any]
+    trip_days: int = Field(default=1, ge=1, le=30)
+    desired_poi_count: Optional[int] = Field(default=None, ge=1, le=50)
+    top_k: int = Field(default=10, ge=1, le=50)
+
+
+class GenerateCourseStep(BaseModel):
+    rank: int
+    day_index: int
+    slot_index: int
+    content_id: str
+    token_id: int
+    score: float
+
+
+class GenerateCourseResponse(BaseModel):
+    content_id_sequence: list[str]
+    steps: list[GenerateCourseStep]
 
 
 def load_runtime(artifact_dir: Path) -> dict[str, Any]:
@@ -56,14 +80,18 @@ def load_runtime(artifact_dir: Path) -> dict[str, Any]:
 
 
 ARTIFACT_DIR = Path(os.environ.get("TINY_GRU_ARTIFACT_DIR", DEFAULT_ARTIFACT_DIR)).resolve()
+COURSE_ARTIFACT_DIR = Path(os.environ.get("COURSE_DECODER_ARTIFACT_DIR", DEFAULT_COURSE_ARTIFACT_DIR)).resolve()
 RUNTIME: dict[str, Any] | None = None
+COURSE_RUNTIME: OnnxCourseGenerator | None = None
 app = FastAPI(title="Tiny GRU POI Recommender")
 
 
 @app.on_event("startup")
 def startup() -> None:
-    global RUNTIME
+    global RUNTIME, COURSE_RUNTIME
     RUNTIME = load_runtime(ARTIFACT_DIR)
+    if (COURSE_ARTIFACT_DIR / "course_user_encoder.onnx").exists() and (COURSE_ARTIFACT_DIR / "course_decoder_step.onnx").exists():
+        COURSE_RUNTIME = OnnxCourseGenerator(COURSE_ARTIFACT_DIR)
 
 
 @app.get("/health")
@@ -112,3 +140,31 @@ def recommend(request: RecommendRequest) -> RecommendResponse:
     ]
     return RecommendResponse(recommendations=recommendations)
 
+
+@app.post("/generate-course", response_model=GenerateCourseResponse)
+def generate_course(request: GenerateCourseRequest) -> GenerateCourseResponse:
+    if COURSE_RUNTIME is None:
+        raise HTTPException(status_code=503, detail="course decoder runtime is not loaded")
+    try:
+        content_ids, steps = COURSE_RUNTIME.generate(
+            user_features=request.user_features,
+            trip_days=request.trip_days,
+            desired_poi_count=request.desired_poi_count,
+            duplicate_masking=True,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"invalid course generation request: {exc}") from exc
+    return GenerateCourseResponse(
+        content_id_sequence=content_ids,
+        steps=[
+            GenerateCourseStep(
+                rank=step.rank,
+                day_index=step.day_index,
+                slot_index=step.slot_index,
+                content_id=step.content_id,
+                token_id=step.token_id,
+                score=step.score,
+            )
+            for step in steps
+        ],
+    )

@@ -1,0 +1,55 @@
+{
+  "seed": 42,
+  "min_sequence_len": 2,
+  "top_ks": [
+    1,
+    3,
+    5,
+    10
+  ],
+  "input_path": "data\\processed\\total_input.csv",
+  "sequence_path": "data\\processed\\total_travel_seq_with_contentid.csv",
+  "best_config": {
+    "embedding_dim": 16,
+    "hidden_dim": 48,
+    "dropout": 0.2,
+    "learning_rate": 0.001,
+    "batch_size": 64,
+    "epochs": 8,
+    "weight_decay": 1e-05
+  },
+  "static_feature_columns": [
+    "area_code",
+    "trip_days",
+    "theme",
+    "has_child",
+    "has_elderly",
+    "has_disabled",
+    "companion_count",
+    "p0_age",
+    "p0_gender",
+    "p0_style",
+    "p0_home",
+    "p0_preferred",
+    "p1_age",
+    "p1_gender",
+    "p1_style",
+    "p1_home",
+    "p1_preferred",
+    "desired_poi_count",
+    "poi_per_day"
+  ],
+  "step_feature_columns": [
+    "day_index",
+    "slot_index",
+    "absolute_step_index",
+    "remaining_poi_count",
+    "remaining_days",
+    "is_day_start"
+  ],
+  "special_token_ids": [
+    0,
+    1,
+    2
+  ]
+}

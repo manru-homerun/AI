@@ -34,6 +34,24 @@ Export the trained Tiny GRU checkpoint to ONNX:
 uv run python -m src.inference.export_tiny_gru_onnx --artifact-dir artifacts\tiny_gru_onnx_experiment
 ```
 
+Run the Conditional GRU course decoder experiment:
+
+```bash
+uv run python -m src.training.conditional_gru_decoder_experiment --artifact-dir artifacts\conditional_gru_decoder_experiment
+```
+
+Export the Conditional GRU course decoder to ONNX:
+
+```bash
+uv run python -m src.inference.export_conditional_gru_decoder_onnx --artifact-dir artifacts\conditional_gru_decoder_experiment
+```
+
+Summarize the Conditional GRU course decoder artifacts:
+
+```bash
+uv run python -m src.evaluation.conditional_gru_decoder_eval --artifact-dir artifacts\conditional_gru_decoder_experiment
+```
+
 Start Jupyter:
 
 ```bash
@@ -45,6 +63,8 @@ Serve the ONNX model with FastAPI:
 ```bash
 uv run uvicorn src.api.tiny_gru_app:app --host 0.0.0.0 --port 8000
 ```
+
+When `artifacts\conditional_gru_decoder_experiment` contains the exported ONNX files, the same FastAPI app also serves `/generate-course`.
 
 ## Dependency Layout
 
