@@ -61,7 +61,7 @@ uv run jupyter notebook
 Serve the ONNX model with FastAPI:
 
 ```bash
-uv run uvicorn src.api.tiny_gru_app:app --host 0.0.0.0 --port 8000
+uv run --no-dev uvicorn src.api.tiny_gru_app:app --host 0.0.0.0 --port 8000
 ```
 
 When `artifacts\conditional_gru_decoder_experiment` contains the exported ONNX files, the same FastAPI app also serves `/generate-course`.
