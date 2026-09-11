@@ -66,6 +66,29 @@ uv run --no-dev uvicorn src.api.tiny_gru_app:app --host 0.0.0.0 --port 8000
 
 When `artifacts\conditional_gru_decoder_experiment` contains the exported ONNX files, the same FastAPI app also serves `/generate-course`.
 
+Generate a travel course with the backend contract body:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/travel/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "areaCode": "central",
+    "travelDuration": "2",
+    "travelPersona": "21;3",
+    "ageGroup": "30",
+    "gender": "남",
+    "travelerStyle": "4",
+    "preferredArea": "50110;26350",
+    "residenceArea": "11",
+    "hasChild": false,
+    "hasElderly": false,
+    "hasDisabled": false,
+    "companionCount": 1
+  }'
+```
+
+`travelPersona` may contain multiple codes separated by `;`, `,`, or spaces; the first code is used as the model `theme`. `travelerStyle` is expanded to the model's eight-slot style feature. If `desired_poi_count` is not supplied, `/api/travel/generate` creates `travelDuration * 3` POIs.
+
 ## EC2 Docker Deployment
 
 The production deployment uses Nginx, Docker Compose, FastAPI, and ONNX Runtime. PyTorch is not installed in the production image.
