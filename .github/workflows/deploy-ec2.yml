@@ -1,0 +1,84 @@
+name: Deploy EC2
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-ec2
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      EC2_APP_DIR: ${{ secrets.EC2_APP_DIR || '/opt/travel-ai' }}
+      HEALTHCHECK_URL: https://${{ secrets.EC2_HOST }}/health
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify production dependency boundary
+        run: |
+          ! grep -E '^torch==' requirements-production.txt
+
+      - name: Create source bundle
+        run: |
+          tar \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.venv' \
+            --exclude='.env' \
+            --exclude='data' \
+            --exclude='notebooks' \
+            --exclude='artifacts/tiny_gru_onnx_smoke' \
+            --exclude='artifacts/tiny_gru_prefix_ablation' \
+            --exclude='artifacts/conditional_gru_decoder_smoke' \
+            -czf travel-ai-${GITHUB_SHA}.tar.gz .
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          install -m 600 /dev/null ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Upload source bundle
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" "mkdir -p '${EC2_APP_DIR}/releases/${GITHUB_SHA}' '${EC2_APP_DIR}/shared'"
+          scp -i ~/.ssh/deploy_key "travel-ai-${GITHUB_SHA}.tar.gz" "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${EC2_APP_DIR}/releases/${GITHUB_SHA}/source.tar.gz"
+
+      - name: Deploy with Docker Compose
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" << EOF
+          set -euo pipefail
+          APP_DIR="${EC2_APP_DIR}"
+          RELEASE_DIR="\${APP_DIR}/releases/${GITHUB_SHA}"
+          PREVIOUS_TARGET=""
+          if [ -L "\${APP_DIR}/current" ]; then
+            PREVIOUS_TARGET="\$(readlink -f "\${APP_DIR}/current")"
+          fi
+          tar -xzf "\${RELEASE_DIR}/source.tar.gz" -C "\${RELEASE_DIR}"
+          rm "\${RELEASE_DIR}/source.tar.gz"
+          printf '%s\n' "${GITHUB_SHA}" > "\${RELEASE_DIR}/REVISION"
+          ln -sfn "\${RELEASE_DIR}" "\${APP_DIR}/current"
+          cd "\${APP_DIR}/current"
+          docker compose build ai-api
+          docker compose up -d
+          docker compose ps
+          if ! curl -fsS --max-time 20 "${HEALTHCHECK_URL}"; then
+            if [ -n "\${PREVIOUS_TARGET}" ] && [ -d "\${PREVIOUS_TARGET}" ]; then
+              ln -sfn "\${PREVIOUS_TARGET}" "\${APP_DIR}/current"
+              cd "\${APP_DIR}/current"
+              docker compose up -d --build
+            fi
+            exit 1
+          fi
+          EOF
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
