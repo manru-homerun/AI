@@ -16,7 +16,6 @@ jobs:
     env:
       EC2_APP_DIR: ${{ secrets.EC2_APP_DIR || '/opt/travel-ai' }}
       HEALTHCHECK_URL: https://${{ secrets.EC2_HOST }}/health
-      SOURCE_BUNDLE: ${{ runner.temp }}/travel-ai-${{ github.sha }}.tar.gz
 
     steps:
       - name: Checkout
@@ -28,6 +27,7 @@ jobs:
 
       - name: Create source bundle
         run: |
+          SOURCE_BUNDLE="${RUNNER_TEMP}/travel-ai-${GITHUB_SHA}.tar.gz"
           tar \
             --exclude='.git' \
             --exclude='.github' \
@@ -39,6 +39,7 @@ jobs:
             --exclude='artifacts/tiny_gru_prefix_ablation' \
             --exclude='artifacts/conditional_gru_decoder_smoke' \
             -czf "${SOURCE_BUNDLE}" .
+          echo "SOURCE_BUNDLE=${SOURCE_BUNDLE}" >> "$GITHUB_ENV"
 
       - name: Configure SSH
         run: |
