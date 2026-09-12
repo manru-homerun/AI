@@ -16,6 +16,7 @@ jobs:
     env:
       EC2_APP_DIR: ${{ secrets.EC2_APP_DIR || '/opt/travel-ai' }}
       HEALTHCHECK_URL: https://${{ secrets.EC2_HOST }}/health
+      SOURCE_BUNDLE: ${{ runner.temp }}/travel-ai-${{ github.sha }}.tar.gz
 
     steps:
       - name: Checkout
@@ -37,7 +38,7 @@ jobs:
             --exclude='artifacts/tiny_gru_onnx_smoke' \
             --exclude='artifacts/tiny_gru_prefix_ablation' \
             --exclude='artifacts/conditional_gru_decoder_smoke' \
-            -czf travel-ai-${GITHUB_SHA}.tar.gz .
+            -czf "${SOURCE_BUNDLE}" .
 
       - name: Configure SSH
         run: |
@@ -49,7 +50,7 @@ jobs:
       - name: Upload source bundle
         run: |
           ssh -i ~/.ssh/deploy_key "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" "mkdir -p '${EC2_APP_DIR}/releases/${GITHUB_SHA}' '${EC2_APP_DIR}/shared'"
-          scp -i ~/.ssh/deploy_key "travel-ai-${GITHUB_SHA}.tar.gz" "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${EC2_APP_DIR}/releases/${GITHUB_SHA}/source.tar.gz"
+          scp -i ~/.ssh/deploy_key "${SOURCE_BUNDLE}" "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${EC2_APP_DIR}/releases/${GITHUB_SHA}/source.tar.gz"
 
       - name: Deploy with Docker Compose
         run: |
