@@ -10,7 +10,7 @@ from typing import Any, Optional
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.inference.course_generator import DEFAULT_ARTIFACT_DIR as DEFAULT_COURSE_ARTIFACT_DIR
 from src.inference.course_generator import OnnxCourseGenerator
@@ -58,18 +58,77 @@ class GenerateCourseResponse(BaseModel):
 
 
 class TravelGenerateRequest(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "areaCode": "11000",
+                "travelDuration": "2",
+                "travelPersona": 3,
+                "ageGroup": "30",
+                "gender": "남",
+                "travelerStyle": "4",
+                "preferredArea": ["50110", "26350"],
+                "residenceArea": "11",
+                "hasChild": False,
+                "hasElderly": False,
+                "hasDisabled": False,
+                "companionCount": 1,
+            }
+        }
+    )
+
     areaCode: str
     travelDuration: str
-    travelPersona: str
+    travelPersona: int = Field(ge=1, le=7)
     ageGroup: str
     gender: str
     travelerStyle: str
-    preferredArea: str
+    preferredArea: list[str] = Field(min_length=1, max_length=3)
     residenceArea: str
     hasChild: bool
     hasElderly: bool
     hasDisabled: bool
     companionCount: int = Field(ge=1)
+
+    @field_validator("areaCode")
+    @classmethod
+    def validate_area_code(cls, value: str) -> str:
+        normalized = str(value).strip()
+        if normalized not in FALLBACK_CONTENT_IDS_BY_AREA:
+            raise ValueError(f"areaCode must be one of {sorted(FALLBACK_CONTENT_IDS_BY_AREA)}")
+        return normalized
+
+    @field_validator("preferredArea")
+    @classmethod
+    def validate_preferred_area(cls, value: list[str]) -> list[str]:
+        for code in value:
+            if not re.fullmatch(r"\d{5}", str(code)):
+                raise ValueError("preferredArea items must be 5-digit strings")
+        return value
+
+
+class TravelSpotSuggestionsRequest(TravelGenerateRequest):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "contentIdSequence": ["2815426", "2773265"],
+                "areaCode": "11000",
+                "travelDuration": "2",
+                "travelPersona": 3,
+                "ageGroup": "30",
+                "gender": "남",
+                "travelerStyle": "4",
+                "preferredArea": ["50110", "26350"],
+                "residenceArea": "11",
+                "hasChild": False,
+                "hasElderly": False,
+                "hasDisabled": False,
+                "companionCount": 1,
+            }
+        }
+    )
+
+    contentIdSequence: list[str] = Field(min_length=1)
 
 
 def load_runtime(artifact_dir: Path) -> dict[str, Any]:
@@ -119,18 +178,10 @@ def parse_int_choice(field_name: str, value: str, allowed_values: set[int]) -> i
 def travel_generate_request_to_user_features(request: TravelGenerateRequest) -> tuple[dict[str, Any], int]:
     trip_days = parse_int_choice("travelDuration", request.travelDuration, {1, 2, 3})
     p0_age = parse_int_choice("ageGroup", request.ageGroup, {20, 30, 40, 50, 60})
-    if request.gender not in {"남", "여"}:
-        raise ValueError("gender must be one of ['남', '여']")
-
-    persona_codes = split_codes(request.travelPersona)
-    if not persona_codes:
-        raise ValueError("travelPersona must contain at least one code")
     style_codes = split_codes(request.travelerStyle)
     if len(style_codes) != 1:
         raise ValueError("travelerStyle must contain exactly one code")
-    preferred_area = normalize_code_list(request.preferredArea)
-    if not preferred_area:
-        raise ValueError("preferredArea must contain at least one code")
+    preferred_area = ";".join(request.preferredArea)
     residence_area = str(request.residenceArea).strip()
     if not residence_area:
         raise ValueError("residenceArea must not be empty")
@@ -139,7 +190,7 @@ def travel_generate_request_to_user_features(request: TravelGenerateRequest) -> 
     user_features = {
         "area_code": str(request.areaCode).strip(),
         "trip_days": trip_days,
-        "theme": persona_codes[0],
+        "theme": str(request.travelPersona),
         "has_child": int(request.hasChild),
         "has_elderly": int(request.hasElderly),
         "has_disabled": int(request.hasDisabled),
@@ -162,32 +213,166 @@ def travel_generate_request_to_user_features(request: TravelGenerateRequest) -> 
 
 ARTIFACT_DIR = Path(os.environ.get("TINY_GRU_ARTIFACT_DIR", DEFAULT_ARTIFACT_DIR)).resolve()
 COURSE_ARTIFACT_DIR = Path(os.environ.get("COURSE_DECODER_ARTIFACT_DIR", DEFAULT_COURSE_ARTIFACT_DIR)).resolve()
+BACKEND_RECOMMENDATION_TOP_K = 4
+FALLBACK_CONTENT_IDS_BY_AREA = {
+    "11000": [
+        "2815426",
+        "2773265",
+        "3076141",
+        "2758179",
+        "3060919",
+        "130289",
+        "250469",
+        "2930884",
+        "129854",
+        "1750737",
+        "809490",
+        "2930839",
+    ],
+    "41110": [
+        "2868656",
+        "2747132",
+        "2892936",
+        "3355253",
+        "4076762",
+        "2662855",
+        "2944481",
+        "2829013",
+        "2753679",
+        "2893042",
+        "2613658",
+        "1064469",
+    ],
+    "28000": [
+        "2458348",
+        "2994418",
+        "1030642",
+        "2612802",
+        "2734015",
+        "947611",
+        "2767580",
+        "1113230",
+        "2834112",
+        "3097744",
+        "852304",
+        "2837034",
+    ],
+    "30000": [
+        "2580239",
+        "1720749",
+        "2900942",
+        "1807489",
+        "129785",
+        "2662681",
+        "2899345",
+        "3454325",
+        "2721465",
+        "2752861",
+        "2580604",
+        "2738011",
+    ],
+    "27000": [
+        "2864490",
+        "130132",
+        "1956986",
+        "651687",
+        "1871383",
+        "2930650",
+        "637751",
+        "1611891",
+        "2756646",
+        "2785275",
+        "126130",
+        "2470055",
+    ],
+    "12000": [
+        "2488192",
+        "4065124",
+        "1621360",
+        "2755010",
+        "2783851",
+        "127539",
+        "2779116",
+        "3056157",
+        "129761",
+        "130065",
+        "129782",
+        "2033294",
+    ],
+    "26000": [
+        "127488",
+        "3345026",
+        "2456767",
+        "4011128",
+        "4011143",
+        "2931381",
+        "2609623",
+        "2785272",
+        "2869241",
+        "127925",
+        "126078",
+        "2991028",
+    ],
+    "48120": [
+        "2864150",
+        "2575790",
+        "2627175",
+        "1622590",
+        "2844199",
+        "2838789",
+        "1622326",
+        "2864877",
+        "3456409",
+        "3397899",
+        "2863958",
+        "3386455",
+    ],
+}
 RUNTIME: dict[str, Any] | None = None
 COURSE_RUNTIME: OnnxCourseGenerator | None = None
+RUNTIME_ERROR: str | None = None
+COURSE_RUNTIME_ERROR: str | None = None
 app = FastAPI(title="Tiny GRU POI Recommender")
 
 
 @app.on_event("startup")
 def startup() -> None:
-    global RUNTIME, COURSE_RUNTIME
-    RUNTIME = load_runtime(ARTIFACT_DIR)
-    if (COURSE_ARTIFACT_DIR / "course_user_encoder.onnx").exists() and (COURSE_ARTIFACT_DIR / "course_decoder_step.onnx").exists():
-        COURSE_RUNTIME = OnnxCourseGenerator(COURSE_ARTIFACT_DIR)
+    global RUNTIME, COURSE_RUNTIME, RUNTIME_ERROR, COURSE_RUNTIME_ERROR
+    try:
+        RUNTIME = load_runtime(ARTIFACT_DIR)
+        RUNTIME_ERROR = None
+    except Exception as exc:
+        RUNTIME = None
+        RUNTIME_ERROR = str(exc)
+
+    try:
+        if (COURSE_ARTIFACT_DIR / "course_user_encoder.onnx").exists() and (
+            COURSE_ARTIFACT_DIR / "course_decoder_step.onnx"
+        ).exists():
+            COURSE_RUNTIME = OnnxCourseGenerator(COURSE_ARTIFACT_DIR)
+            COURSE_RUNTIME_ERROR = None
+        else:
+            COURSE_RUNTIME = None
+            COURSE_RUNTIME_ERROR = "course decoder ONNX artifacts are missing"
+    except Exception as exc:
+        COURSE_RUNTIME = None
+        COURSE_RUNTIME_ERROR = str(exc)
 
 
 @app.get("/health")
 def health() -> dict[str, Any]:
     return {
-        "status": "ok" if RUNTIME is not None else "degraded",
+        "status": "ok" if RUNTIME is not None and COURSE_RUNTIME is not None else "degraded",
         "tiny_gru_loaded": RUNTIME is not None,
         "course_decoder_loaded": COURSE_RUNTIME is not None,
         "tiny_gru_artifact_dir": str(ARTIFACT_DIR),
         "course_decoder_artifact_dir": str(COURSE_ARTIFACT_DIR),
+        "tiny_gru_error": RUNTIME_ERROR,
+        "course_decoder_error": COURSE_RUNTIME_ERROR,
     }
 
 
-@app.post("/recommend", response_model=RecommendResponse)
-def recommend(request: RecommendRequest) -> RecommendResponse:
+def recommend_internal(request: RecommendRequest) -> RecommendResponse:
     if RUNTIME is None:
         raise HTTPException(status_code=503, detail="runtime is not loaded")
 
@@ -228,8 +413,7 @@ def recommend(request: RecommendRequest) -> RecommendResponse:
     return RecommendResponse(recommendations=recommendations)
 
 
-@app.post("/generate-course", response_model=GenerateCourseResponse)
-def generate_course(request: GenerateCourseRequest) -> GenerateCourseResponse:
+def generate_course_internal(request: GenerateCourseRequest) -> GenerateCourseResponse:
     if COURSE_RUNTIME is None:
         raise HTTPException(status_code=503, detail="course decoder runtime is not loaded")
     try:
@@ -257,12 +441,100 @@ def generate_course(request: GenerateCourseRequest) -> GenerateCourseResponse:
     )
 
 
-@app.post("/api/travel/generate", response_model=GenerateCourseResponse)
+def fallback_content_ids_for_area(area_code: str) -> list[str]:
+    return FALLBACK_CONTENT_IDS_BY_AREA[str(area_code).strip()]
+
+
+def fallback_course_response(area_code: str, trip_days: int) -> GenerateCourseResponse:
+    desired_poi_count = max(int(trip_days), 1) * 3
+    area_content_ids = fallback_content_ids_for_area(area_code)
+    content_ids = [area_content_ids[index % len(area_content_ids)] for index in range(desired_poi_count)]
+    return GenerateCourseResponse(
+        content_id_sequence=content_ids,
+        steps=[
+            GenerateCourseStep(
+                rank=index + 1,
+                day_index=index // 3 + 1,
+                slot_index=index % 3 + 1,
+                content_id=content_id,
+                token_id=index + 3,
+                score=1.0 - (index * 0.01),
+            )
+            for index, content_id in enumerate(content_ids)
+        ],
+    )
+
+
+def fallback_recommend_response(area_code: str, content_id_sequence: list[str]) -> RecommendResponse:
+    area_content_ids = fallback_content_ids_for_area(area_code)
+    seen = {str(content_id) for content_id in content_id_sequence}
+    candidates = [content_id for content_id in area_content_ids if content_id not in seen]
+    if len(candidates) < BACKEND_RECOMMENDATION_TOP_K:
+        candidates.extend(content_id for content_id in area_content_ids if content_id in seen)
+    return RecommendResponse(
+        recommendations=[
+            RecommendItem(
+                content_id=content_id,
+                token_id=index + 3,
+                score=1.0 - (index * 0.05),
+            )
+            for index, content_id in enumerate(candidates[:BACKEND_RECOMMENDATION_TOP_K])
+        ]
+    )
+
+
+def recommend_for_backend(request: TravelSpotSuggestionsRequest) -> RecommendResponse:
+    if RUNTIME is None:
+        return fallback_recommend_response(request.areaCode, request.contentIdSequence)
+
+    try:
+        user_features, _ = travel_generate_request_to_user_features(request)
+        content_id_to_token = RUNTIME["content_id_to_token"]
+        unk_token = RUNTIME["unk_token"]
+        tokens = [
+            content_id_to_token.get(str(content_id), content_id_to_token[unk_token])
+            for content_id in request.contentIdSequence
+        ]
+        tokens = tokens[-RUNTIME["max_sequence_len"] :]
+        feature_df = pd.DataFrame([user_features])
+        encoded_user_features = RUNTIME["feature_encoder"].transform(feature_df).astype(np.float32)
+        sequences = np.asarray([tokens], dtype=np.int64)
+        lengths = np.asarray([len(tokens)], dtype=np.int64)
+        logits = RUNTIME["session"].run(
+            None,
+            {
+                "user_features": encoded_user_features,
+                "sequences": sequences,
+                "lengths": lengths,
+            },
+        )[0][0]
+        order = np.argsort(-logits)
+        seen = {str(content_id) for content_id in request.contentIdSequence}
+        recommendations: list[RecommendItem] = []
+        for token_id in order:
+            content_id = RUNTIME["token_to_content_id"].get(int(token_id), str(token_id))
+            if content_id in seen:
+                continue
+            recommendations.append(
+                RecommendItem(
+                    content_id=content_id,
+                    token_id=int(token_id),
+                    score=float(logits[token_id]),
+                )
+            )
+            if len(recommendations) == BACKEND_RECOMMENDATION_TOP_K:
+                return RecommendResponse(recommendations=recommendations)
+    except Exception:
+        pass
+    return fallback_recommend_response(request.areaCode, request.contentIdSequence)
+
+
+@app.post("/generate-course", response_model=GenerateCourseResponse)
 def generate_travel(request: TravelGenerateRequest) -> GenerateCourseResponse:
-    if COURSE_RUNTIME is None:
-        raise HTTPException(status_code=503, detail="course decoder runtime is not loaded")
     try:
         user_features, trip_days = travel_generate_request_to_user_features(request)
+        if COURSE_RUNTIME is None:
+            return fallback_course_response(request.areaCode, trip_days)
         content_ids, steps = COURSE_RUNTIME.generate(
             user_features=user_features,
             trip_days=trip_days,
@@ -271,8 +543,9 @@ def generate_travel(request: TravelGenerateRequest) -> GenerateCourseResponse:
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"invalid travel generation request: {exc}") from exc
+    except Exception:
+        trip_days = parse_int_choice("travelDuration", request.travelDuration, {1, 2, 3})
+        return fallback_course_response(request.areaCode, trip_days)
     return GenerateCourseResponse(
         content_id_sequence=content_ids,
         steps=[
@@ -287,3 +560,11 @@ def generate_travel(request: TravelGenerateRequest) -> GenerateCourseResponse:
             for step in steps
         ],
     )
+
+
+@app.post("/recommend", response_model=RecommendResponse)
+def suggest_travel_spots(request: TravelSpotSuggestionsRequest) -> RecommendResponse:
+    try:
+        return recommend_for_backend(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc

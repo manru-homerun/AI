@@ -1,4 +1,4 @@
-# Korean Travel Recommendation
+﻿# Korean Travel Recommendation
 
 This project uses `uv` for Python environment and dependency management.
 
@@ -65,20 +65,21 @@ uv run --no-dev uvicorn src.api.tiny_gru_app:app --host 0.0.0.0 --port 8000
 ```
 
 When `artifacts\conditional_gru_decoder_experiment` contains the exported ONNX files, the same FastAPI app also serves `/generate-course`.
+The backend-facing `/generate-course` and `/recommend` endpoints automatically return test data if model artifacts are missing or inference fails.
 
 Generate a travel course with the backend contract body:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/api/travel/generate \
+curl -X POST http://127.0.0.1:8000/generate-course \
   -H "Content-Type: application/json" \
   -d '{
-    "areaCode": "central",
+    "areaCode": "11000",
     "travelDuration": "2",
-    "travelPersona": "21;3",
+    "travelPersona": 3,
     "ageGroup": "30",
     "gender": "남",
     "travelerStyle": "4",
-    "preferredArea": "50110;26350",
+    "preferredArea": ["50110", "26350"],
     "residenceArea": "11",
     "hasChild": false,
     "hasElderly": false,
@@ -87,7 +88,31 @@ curl -X POST http://127.0.0.1:8000/api/travel/generate \
   }'
 ```
 
-`travelPersona` may contain multiple codes separated by `;`, `,`, or spaces; the first code is used as the model `theme`. `travelerStyle` is expanded to the model's eight-slot style feature. If `desired_poi_count` is not supplied, `/api/travel/generate` creates `travelDuration * 3` POIs.
+Recommend additional spots with the backend contract body:
+
+```bash
+curl -X POST http://127.0.0.1:8000/recommend \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contentIdSequence": ["2815426", "2773265"],
+    "areaCode": "11000",
+    "travelDuration": "2",
+    "travelPersona": 3,
+    "ageGroup": "30",
+    "gender": "남",
+    "travelerStyle": "4",
+    "preferredArea": ["50110", "26350"],
+    "residenceArea": "11",
+    "hasChild": false,
+    "hasElderly": false,
+    "hasDisabled": false,
+    "companionCount": 1
+  }'
+```
+
+`areaCode` must be one of the supported backend region codes: `11000` Seoul, `41110` Suwon, `28000` Incheon, `30000` Daejeon, `27000` Daegu, `12000` Gwangju, `26000` Busan, or `48120` Changwon. Fallback responses use real `contentid` values from `data/processed/manual_keyword_search_sample.csv` for the requested region.
+
+`travelPersona` must be an integer from 1 to 7. `preferredArea` must contain one to three 5-digit string codes. `travelerStyle` is expanded to the model's eight-slot style feature. `/generate-course` creates `travelDuration * 3` POIs, and `/recommend` always uses top 4 recommendations on the AI server side.
 
 ## EC2 Docker Deployment
 
