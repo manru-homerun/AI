@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 
 from conftest import AREA_FALLBACK_IDS
 from src.api import tiny_gru_app
+from src.inference import runtime as runtime_state
 
 
 class DummyCourseRuntime:
@@ -35,7 +36,7 @@ class DummyCourseRuntime:
 
 
 def test_generate_travel_returns_fallback_with_content_id_list_prefix(monkeypatch, backend_payload) -> None:
-    monkeypatch.setattr(tiny_gru_app, "COURSE_RUNTIME", None)
+    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", None)
     client = TestClient(tiny_gru_app.app)
 
     response = client.post("/generate-course", json=backend_payload)
@@ -50,7 +51,7 @@ def test_generate_travel_returns_fallback_with_content_id_list_prefix(monkeypatc
 
 
 def test_generate_travel_fallback_uses_area_specific_content_ids(monkeypatch, backend_payload) -> None:
-    monkeypatch.setattr(tiny_gru_app, "COURSE_RUNTIME", None)
+    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", None)
     client = TestClient(tiny_gru_app.app)
 
     for area_code, area_content_ids in AREA_FALLBACK_IDS.items():
@@ -69,7 +70,7 @@ def test_generate_travel_fallback_uses_area_specific_content_ids(monkeypatch, ba
 
 
 def test_generate_travel_runtime_uses_area_specific_content_ids(monkeypatch, backend_payload) -> None:
-    monkeypatch.setattr(tiny_gru_app, "COURSE_RUNTIME", DummyCourseRuntime())
+    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", DummyCourseRuntime())
     client = TestClient(tiny_gru_app.app)
 
     response = client.post("/generate-course", json=backend_payload)
@@ -95,6 +96,15 @@ def test_content_id_list_validation(backend_payload) -> None:
     assert too_long_response.status_code == 400
 
 
+def test_companion_count_zero_is_accepted(monkeypatch, backend_payload) -> None:
+    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", None)
+    client = TestClient(tiny_gru_app.app)
+
+    response = client.post("/generate-course", json={**backend_payload, "companionCount": 0})
+
+    assert response.status_code == 200
+
+
 def test_preferred_area_requires_one_to_three_five_digit_strings(backend_payload) -> None:
     client = TestClient(tiny_gru_app.app)
 
@@ -118,6 +128,14 @@ def test_travel_persona_must_be_between_one_and_seven(backend_payload) -> None:
     assert response.status_code == 422
 
 
+def test_travel_duration_must_be_one_to_three(backend_payload) -> None:
+    client = TestClient(tiny_gru_app.app)
+
+    response = client.post("/generate-course", json={**backend_payload, "travelDuration": "4"})
+
+    assert response.status_code == 400
+
+
 def test_area_code_must_be_supported(backend_payload) -> None:
     client = TestClient(tiny_gru_app.app)
 
@@ -127,8 +145,8 @@ def test_area_code_must_be_supported(backend_payload) -> None:
 
 
 def test_health_reports_degraded_when_runtimes_are_missing(monkeypatch) -> None:
-    monkeypatch.setattr(tiny_gru_app, "RUNTIME", None)
-    monkeypatch.setattr(tiny_gru_app, "COURSE_RUNTIME", None)
+    monkeypatch.setattr(runtime_state, "RUNTIME", None)
+    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", None)
     client = TestClient(tiny_gru_app.app)
 
     response = client.get("/health")
