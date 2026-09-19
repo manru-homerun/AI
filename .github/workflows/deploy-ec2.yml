@@ -144,45 +144,26 @@ jobs:
             return 1
           }
 
-          ensure_nginx_running() {
-            FAILED_STAGE="nginx availability"
-            NGINX_STATUS="$(docker container inspect --format='{{.State.Status}}' travel-ai-nginx 2>/dev/null || echo missing)"
-            NGINX_RESTARTING="$(docker container inspect --format='{{.State.Restarting}}' travel-ai-nginx 2>/dev/null || echo false)"
-
-            if [ "${NGINX_STATUS}" = "missing" ]; then
-              echo "travel-ai-nginx does not exist; creating nginx service."
-              FAILED_STAGE="nginx initial startup"
-              dc up -d --no-deps nginx || return 1
-            elif [ "${NGINX_STATUS}" != "running" ] || [ "${NGINX_RESTARTING}" != "false" ]; then
-              echo "travel-ai-nginx is ${NGINX_STATUS} (restarting: ${NGINX_RESTARTING}); recreating nginx service."
-              FAILED_STAGE="nginx recovery startup"
-              dc up -d --no-deps --force-recreate nginx || return 1
-            fi
+          recreate_nginx() {
+            FAILED_STAGE="nginx recreate"
+            dc up -d --no-deps --force-recreate nginx || return 1
 
             wait_for_nginx_running || return 1
-          }
-
-          reload_nginx() {
-            ensure_nginx_running || return 1
 
             FAILED_STAGE="nginx configuration"
             echo "+ docker exec travel-ai-nginx nginx -t"
             docker exec travel-ai-nginx nginx -t || return 1
-
-            FAILED_STAGE="nginx reload"
-            echo "+ docker exec travel-ai-nginx nginx -s reload"
-            docker exec travel-ai-nginx nginx -s reload || return 1
           }
 
           check_external_health() {
             FAILED_STAGE="external HTTPS healthcheck"
             for attempt in $(seq 1 15); do
-              if curl -fsS --max-time 5 "${HEALTHCHECK_URL}"; then
-                echo
+              HTTP_STATUS="$(curl -sS -o /tmp/travel-ai-healthcheck.out -w "%{http_code}" --max-time 5 "${HEALTHCHECK_URL}" || true)"
+              if [ "${HTTP_STATUS}" = "200" ]; then
                 echo "external healthcheck succeeded"
                 return 0
               fi
-              echo "external healthcheck failed (${attempt}/15)"
+              echo "external healthcheck failed (${attempt}/15): status=${HTTP_STATUS:-curl_error}"
               sleep 2
             done
             return 1
@@ -205,7 +186,7 @@ jobs:
             dc up -d --no-deps ai-api || return 1
 
             wait_for_ai_health || return 1
-            reload_nginx || return 1
+            recreate_nginx || return 1
             echo "rollback completed"
           }
 
@@ -217,7 +198,7 @@ jobs:
             dc up -d --no-deps ai-api || return 1
 
             wait_for_ai_health || return 1
-            reload_nginx || return 1
+            recreate_nginx || return 1
             check_external_health || return 1
           }
 
