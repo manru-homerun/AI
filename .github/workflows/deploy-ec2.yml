@@ -81,16 +81,26 @@ jobs:
             dc logs --tail=100 ai-api nginx || true
             docker container inspect travel-ai-api || true
             docker container inspect travel-ai-nginx || true
-            docker exec travel-ai-nginx nginx -T || true
+            if [ "$(docker container inspect --format='{{.State.Status}}' travel-ai-nginx 2>/dev/null || true)" = "running" ]; then
+              docker exec travel-ai-nginx nginx -T || true
+            fi
             echo "::endgroup::"
           }
 
           check_legacy_project() {
             FAILED_STAGE="legacy project check"
             for container in travel-ai-api travel-ai-nginx; do
+              if ! docker container inspect "${container}" >/dev/null 2>&1; then
+                continue
+              fi
               PROJECT_LABEL="$(docker container inspect --format='{{ index .Config.Labels "com.docker.compose.project" }}' "${container}" 2>/dev/null || true)"
               if [ "${PROJECT_LABEL}" = "current" ]; then
                 echo "Found ${container} from legacy Docker Compose project 'current'."
+                echo "Manual cleanup is required before deploying with project '${COMPOSE_PROJECT_NAME}'."
+                return 1
+              fi
+              if [ "${PROJECT_LABEL}" != "${COMPOSE_PROJECT_NAME}" ]; then
+                echo "Found ${container} with unexpected Docker Compose project '${PROJECT_LABEL:-none}'."
                 echo "Manual cleanup is required before deploying with project '${COMPOSE_PROJECT_NAME}'."
                 return 1
               fi
@@ -113,13 +123,40 @@ jobs:
             return 1
           }
 
-          reload_nginx() {
-            FAILED_STAGE="nginx reload"
-            if ! docker container inspect travel-ai-nginx >/dev/null 2>&1; then
+          wait_for_nginx_running() {
+            FAILED_STAGE="nginx startup"
+            for attempt in $(seq 1 30); do
+              NGINX_STATUS="$(docker container inspect --format='{{.State.Status}}' travel-ai-nginx 2>/dev/null || echo missing)"
+              NGINX_RESTARTING="$(docker container inspect --format='{{.State.Restarting}}' travel-ai-nginx 2>/dev/null || echo false)"
+              echo "travel-ai-nginx status: ${NGINX_STATUS}, restarting: ${NGINX_RESTARTING} (${attempt}/30)"
+              if [ "${NGINX_STATUS}" = "running" ] && [ "${NGINX_RESTARTING}" = "false" ]; then
+                return 0
+              fi
+              sleep 2
+            done
+            return 1
+          }
+
+          ensure_nginx_running() {
+            FAILED_STAGE="nginx availability"
+            NGINX_STATUS="$(docker container inspect --format='{{.State.Status}}' travel-ai-nginx 2>/dev/null || echo missing)"
+            NGINX_RESTARTING="$(docker container inspect --format='{{.State.Restarting}}' travel-ai-nginx 2>/dev/null || echo false)"
+
+            if [ "${NGINX_STATUS}" = "missing" ]; then
               echo "travel-ai-nginx does not exist; creating nginx service."
               FAILED_STAGE="nginx initial startup"
-              dc up -d nginx || return 1
+              dc up -d --no-deps nginx || return 1
+            elif [ "${NGINX_STATUS}" != "running" ] || [ "${NGINX_RESTARTING}" != "false" ]; then
+              echo "travel-ai-nginx is ${NGINX_STATUS} (restarting: ${NGINX_RESTARTING}); recreating nginx service."
+              FAILED_STAGE="nginx recovery startup"
+              dc up -d --no-deps --force-recreate nginx || return 1
             fi
+
+            wait_for_nginx_running || return 1
+          }
+
+          reload_nginx() {
+            ensure_nginx_running || return 1
 
             FAILED_STAGE="nginx configuration"
             echo "+ docker exec travel-ai-nginx nginx -t"
