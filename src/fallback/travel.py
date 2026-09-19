@@ -1,8 +1,31 @@
 from __future__ import annotations
 
+import json
+import os
+import socket
 from typing import Any
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
+from urllib.request import urlopen
 
-from src.core.config import BACKEND_RECOMMENDATION_TOP_K, COURSE_POIS_PER_DAY
+from src.core.config import BACKEND_RECOMMENDATION_TOP_K, COURSE_POIS_PER_DAY, ROOT
+
+
+CENTRAL_TOURISM_API_URL = "https://apis.data.go.kr/B551011/LocgoHubTarService1/areaBasedList1"
+CENTRAL_TOURISM_MOBILE_APP = "kor_travel_recommendation"
+CENTRAL_TOURISM_TIMEOUT_SECONDS = 3.0
+CENTRAL_TOURISM_BASE_YM = "202504"
+
+TOURAPI_AREA_PARAMS_BY_BACKEND_AREA = {
+    "11000": {"areaCd": "11", "signguCd": "11710"},
+    "41110": {"areaCd": "41", "signguCd": "41111"},
+    "28000": {"areaCd": "28", "signguCd": "28177"},
+    "30000": {"areaCd": "30", "signguCd": "30140"},
+    "27000": {"areaCd": "27", "signguCd": "27260"},
+    "12000": {"areaCd": "29", "signguCd": "29170"},
+    "26000": {"areaCd": "26", "signguCd": "26260"},
+    "48120": {"areaCd": "48", "signguCd": "48127"},
+}
 
 
 FALLBACK_CONTENT_IDS_BY_AREA = {
@@ -123,6 +146,137 @@ FALLBACK_CONTENT_IDS_BY_AREA = {
 
 def fallback_content_ids_for_area(area_code: str) -> list[str]:
     return FALLBACK_CONTENT_IDS_BY_AREA[str(area_code).strip()]
+
+
+def read_env_key(env_path: str, key_name: str) -> str | None:
+    path = ROOT / env_path
+    if not path.exists():
+        return None
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if key.strip() == key_name:
+            return value.strip().strip('"').strip("'")
+    return None
+
+
+def data_openapi_key() -> str | None:
+    return os.environ.get("DATA_OPENAPI_KEY") or read_env_key(".env", "DATA_OPENAPI_KEY")
+
+
+def looks_url_encoded(value: str) -> bool:
+    return bool(value) and "%2" in value.lower()
+
+
+def build_openapi_url(base_url: str, params: dict[str, Any]) -> str:
+    service_key = str(params["serviceKey"])
+    other_params = {key: value for key, value in params.items() if key != "serviceKey" and value is not None}
+    service_key_param = (
+        f"serviceKey={service_key}"
+        if looks_url_encoded(service_key)
+        else urlencode({"serviceKey": service_key})
+    )
+    return f"{base_url}?{service_key_param}&{urlencode(other_params)}"
+
+
+def parse_openapi_items(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    response = payload.get("response", {})
+    body = response.get("body", {})
+    items = body.get("items", {})
+    raw_item = items.get("item", []) if isinstance(items, dict) else []
+    if isinstance(raw_item, dict):
+        raw_item = [raw_item]
+    if not isinstance(raw_item, list):
+        return []
+    return [item for item in raw_item if isinstance(item, dict)]
+
+
+def central_tourism_content_id(item: dict[str, Any]) -> str | None:
+    for key in (
+        "contentid",
+        "contentId",
+        "hubTatsCd",
+        "rlteTatsId",
+        "rlteTatsNo",
+        "hubTatsId",
+        "hubTatsNo",
+        "baseYmd",
+        "title",
+        "rlteTatsNm",
+        "hubTatsNm",
+    ):
+        value = item.get(key)
+        if value is None:
+            continue
+        normalized = str(value).strip()
+        if normalized:
+            return normalized
+    return None
+
+
+def fetch_central_tourism_items(
+    area_code: str,
+    top_k: int = BACKEND_RECOMMENDATION_TOP_K,
+    service_key: str | None = None,
+    base_url: str | None = None,
+    timeout: float = CENTRAL_TOURISM_TIMEOUT_SECONDS,
+) -> list[dict[str, Any]]:
+    api_key = service_key or data_openapi_key()
+    if not api_key:
+        raise RuntimeError("DATA_OPENAPI_KEY is not configured")
+
+    params: dict[str, Any] = {
+        "serviceKey": api_key,
+        "MobileOS": "ETC",
+        "MobileApp": CENTRAL_TOURISM_MOBILE_APP,
+        "_type": "json",
+        "numOfRows": top_k,
+        "pageNo": 1,
+        "baseYm": os.environ.get("CENTRAL_TOURISM_BASE_YM", CENTRAL_TOURISM_BASE_YM),
+        **TOURAPI_AREA_PARAMS_BY_BACKEND_AREA[str(area_code).strip()],
+    }
+    api_url = base_url or os.environ.get("CENTRAL_TOURISM_API_URL", CENTRAL_TOURISM_API_URL)
+    url = build_openapi_url(api_url, params)
+
+    try:
+        with urlopen(url, timeout=timeout) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except (HTTPError, URLError, TimeoutError, socket.timeout, OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"central tourism API request failed: {type(exc).__name__}") from exc
+
+    header = payload.get("response", {}).get("header", {})
+    result_code = str(header.get("resultCode", ""))
+    if result_code and result_code != "0000":
+        raise RuntimeError("central tourism API returned an error")
+    return parse_openapi_items(payload)
+
+
+def build_central_tourism_recommendation_payload(
+    area_code: str,
+    top_k: int = BACKEND_RECOMMENDATION_TOP_K,
+) -> list[dict[str, Any]]:
+    items = fetch_central_tourism_items(area_code, top_k)
+    recommendations: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in items:
+        content_id = central_tourism_content_id(item)
+        if content_id is None or content_id in seen:
+            continue
+        recommendations.append(
+            {
+                "content_id": content_id,
+                "token_id": len(recommendations) + 3,
+                "score": 1.0 - (len(recommendations) * 0.05),
+            }
+        )
+        seen.add(content_id)
+        if len(recommendations) == top_k:
+            break
+    if len(recommendations) < top_k:
+        raise RuntimeError("central tourism API returned too few items")
+    return recommendations
 
 
 def unique_preserve_order(values: list[str]) -> list[str]:

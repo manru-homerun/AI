@@ -8,7 +8,52 @@ from fastapi.testclient import TestClient
 
 from conftest import AREA_FALLBACK_IDS, DummyFeatureEncoder, DummyRecommendSession
 from src.api import tiny_gru_app
+from src.fallback.travel import (
+    CENTRAL_TOURISM_BASE_YM,
+    CENTRAL_TOURISM_API_URL,
+    TOURAPI_AREA_PARAMS_BY_BACKEND_AREA,
+    build_central_tourism_recommendation_payload,
+)
 from src.inference import runtime as runtime_state
+from src.services import travel_service
+
+
+CENTRAL_TOURISM_RECOMMENDATIONS = [
+    {"content_id": "central-1", "token_id": 3, "score": 1.0},
+    {"content_id": "central-2", "token_id": 4, "score": 0.95},
+    {"content_id": "central-3", "token_id": 5, "score": 0.9},
+    {"content_id": "central-4", "token_id": 6, "score": 0.85},
+]
+
+
+def test_central_tourism_api_url_uses_current_locgo_service() -> None:
+    assert CENTRAL_TOURISM_API_URL == "https://apis.data.go.kr/B551011/LocgoHubTarService1/areaBasedList1"
+
+
+def test_central_tourism_uses_manual_area_params_and_hub_tats_code(monkeypatch) -> None:
+    assert CENTRAL_TOURISM_BASE_YM == "202504"
+    assert TOURAPI_AREA_PARAMS_BY_BACKEND_AREA == {
+        "11000": {"areaCd": "11", "signguCd": "11710"},
+        "41110": {"areaCd": "41", "signguCd": "41111"},
+        "28000": {"areaCd": "28", "signguCd": "28177"},
+        "30000": {"areaCd": "30", "signguCd": "30140"},
+        "27000": {"areaCd": "27", "signguCd": "27260"},
+        "12000": {"areaCd": "29", "signguCd": "29170"},
+        "26000": {"areaCd": "26", "signguCd": "26260"},
+        "48120": {"areaCd": "48", "signguCd": "48127"},
+    }
+
+    monkeypatch.setattr(
+        "src.fallback.travel.fetch_central_tourism_items",
+        lambda area_code, top_k: [
+            {"hubTatsCd": f"hub-{index}", "hubTatsNm": f"spot-{index}"}
+            for index in range(1, top_k + 1)
+        ],
+    )
+
+    recommendations = build_central_tourism_recommendation_payload("11000", 4)
+
+    assert [item["content_id"] for item in recommendations] == ["hub-1", "hub-2", "hub-3", "hub-4"]
 
 
 def test_suggest_travel_spots_returns_four_fallback_items(monkeypatch, backend_payload) -> None:
@@ -51,8 +96,16 @@ def test_suggest_travel_spots_logs_model_unavailable_fallback(monkeypatch, caplo
     assert record.fallback_reason == "model_unavailable"
 
 
-def test_suggest_travel_spots_accepts_empty_content_id_sequence(monkeypatch, backend_payload) -> None:
+def test_suggest_travel_spots_empty_sequence_uses_central_tourism_fallback(
+    monkeypatch, caplog, backend_payload
+) -> None:
     monkeypatch.setattr(runtime_state, "RUNTIME", DummyRecommendSession(np.ones(8, dtype=np.float32)))
+    monkeypatch.setattr(
+        travel_service,
+        "build_central_tourism_recommendation_payload",
+        lambda area_code, top_k: CENTRAL_TOURISM_RECOMMENDATIONS[:top_k],
+    )
+    caplog.set_level(logging.INFO)
     client = TestClient(tiny_gru_app.app)
     payload = {
         **backend_payload,
@@ -67,7 +120,71 @@ def test_suggest_travel_spots_accepts_empty_content_id_sequence(monkeypatch, bac
 
     assert response.status_code == 200
     recommended_ids = [item["content_id"] for item in response.json()["recommendations"]]
+    assert recommended_ids == ["central-1", "central-2", "central-3", "central-4"]
+    record = next(item for item in caplog.records if item.event == "recommend_fallback")
+    assert record.fallback_reason == "empty_sequence_central_tourism"
+
+
+def test_suggest_travel_spots_empty_sequence_falls_back_to_static_when_central_tourism_fails(
+    monkeypatch, backend_payload
+) -> None:
+    monkeypatch.setattr(runtime_state, "RUNTIME", DummyRecommendSession(np.ones(8, dtype=np.float32)))
+
+    def fail_central_tourism(*_args, **_kwargs):
+        raise RuntimeError("central tourism unavailable")
+
+    monkeypatch.setattr(travel_service, "build_central_tourism_recommendation_payload", fail_central_tourism)
+    client = TestClient(tiny_gru_app.app)
+    payload = {
+        **backend_payload,
+        "contentIdSequence": [],
+    }
+    payload.pop("contentIdList")
+
+    response = client.post("/recommend", json=payload)
+
+    assert response.status_code == 200
+    recommended_ids = [item["content_id"] for item in response.json()["recommendations"]]
     assert recommended_ids == AREA_FALLBACK_IDS["11000"][:4]
+
+
+def test_suggest_travel_spots_full_course_sequence_uses_central_tourism_fallback(
+    monkeypatch, caplog, backend_payload
+) -> None:
+    monkeypatch.setattr(
+        runtime_state,
+        "RUNTIME",
+        {
+            "session": DummyRecommendSession(np.ones(8, dtype=np.float32)),
+            "feature_encoder": DummyFeatureEncoder(),
+            "content_id_to_token": {"<UNK>": 0},
+            "token_to_content_id": {},
+            "unk_token": "<UNK>",
+            "max_sequence_len": 8,
+        },
+    )
+    monkeypatch.setattr(
+        travel_service,
+        "build_central_tourism_recommendation_payload",
+        lambda area_code, top_k: CENTRAL_TOURISM_RECOMMENDATIONS[:top_k],
+    )
+
+    def fail_model_recommendation(*_args, **_kwargs):
+        raise AssertionError("model recommendation should be skipped")
+
+    monkeypatch.setattr(travel_service, "recommend_backend_area_limited", fail_model_recommendation)
+    caplog.set_level(logging.INFO)
+    client = TestClient(tiny_gru_app.app)
+    payload = {**backend_payload, "contentIdSequence": [str(index) for index in range(12)]}
+    payload.pop("contentIdList")
+
+    response = client.post("/recommend", json=payload)
+
+    assert response.status_code == 200
+    recommended_ids = [item["content_id"] for item in response.json()["recommendations"]]
+    assert recommended_ids == ["central-1", "central-2", "central-3", "central-4"]
+    record = next(item for item in caplog.records if item.event == "recommend_fallback")
+    assert record.fallback_reason == "full_course_sequence"
 
 
 def test_suggest_travel_spots_fallback_uses_area_specific_content_ids(monkeypatch, backend_payload) -> None:
