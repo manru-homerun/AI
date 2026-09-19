@@ -75,6 +75,14 @@ class TravelBackendRequest(BaseModel):
                 raise ValueError("preferredArea items must be 5-digit strings")
         return value
 
+    @field_validator("gender")
+    @classmethod
+    def validate_gender(cls, value: str) -> str:
+        normalized = str(value).strip()
+        if normalized not in {"남", "여"}:
+            raise ValueError("gender must be one of ['남', '여']")
+        return normalized
+
 
 class TravelGenerateRequest(TravelBackendRequest):
     model_config = ConfigDict(
@@ -85,7 +93,7 @@ class TravelGenerateRequest(TravelBackendRequest):
                 "travelDuration": "2",
                 "travelPersona": 3,
                 "ageGroup": "30",
-                "gender": "F",
+                "gender": "남",
                 "travelerStyle": "4",
                 "preferredArea": ["50110", "26350"],
                 "residenceArea": "11000",
@@ -120,7 +128,7 @@ class TravelSpotSuggestionsRequest(TravelBackendRequest):
                 "travelDuration": "2",
                 "travelPersona": 3,
                 "ageGroup": "30",
-                "gender": "F",
+                "gender": "남",
                 "travelerStyle": "4",
                 "preferredArea": ["50110", "26350"],
                 "residenceArea": "11",

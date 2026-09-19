@@ -121,6 +121,19 @@ def test_preferred_area_requires_one_to_three_five_digit_strings(backend_payload
     assert bad_code_response.status_code == 422
 
 
+def test_gender_must_use_backend_korean_values(monkeypatch, backend_payload) -> None:
+    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", None)
+    client = TestClient(tiny_gru_app.app)
+
+    male_response = client.post("/generate-course", json={**backend_payload, "gender": "남"})
+    female_response = client.post("/generate-course", json={**backend_payload, "gender": "여"})
+    legacy_response = client.post("/generate-course", json={**backend_payload, "gender": "M"})
+
+    assert male_response.status_code == 200
+    assert female_response.status_code == 200
+    assert legacy_response.status_code == 422
+
+
 def test_travel_persona_must_be_between_one_and_seven(backend_payload) -> None:
     client = TestClient(tiny_gru_app.app)
 
