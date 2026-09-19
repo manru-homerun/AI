@@ -109,28 +109,35 @@ jobs:
 
           wait_for_ai_health() {
             FAILED_STAGE="ai-api healthcheck"
-            for attempt in $(seq 1 30); do
+            for attempt in $(seq 1 40); do
               HEALTH_STATUS="$(docker container inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' travel-ai-api 2>/dev/null || echo missing)"
-              echo "travel-ai-api health: ${HEALTH_STATUS} (${attempt}/30)"
+              echo "travel-ai-api health: ${HEALTH_STATUS} (${attempt}/40)"
               if [ "${HEALTH_STATUS}" = "healthy" ]; then
                 return 0
               fi
               if [ "${HEALTH_STATUS}" = "unhealthy" ]; then
                 return 1
               fi
-              sleep 2
+              sleep 3
             done
             return 1
           }
 
           wait_for_nginx_running() {
             FAILED_STAGE="nginx startup"
-            for attempt in $(seq 1 30); do
+            STABLE_CHECKS=0
+            for attempt in $(seq 1 40); do
               NGINX_STATUS="$(docker container inspect --format='{{.State.Status}}' travel-ai-nginx 2>/dev/null || echo missing)"
               NGINX_RESTARTING="$(docker container inspect --format='{{.State.Restarting}}' travel-ai-nginx 2>/dev/null || echo false)"
-              echo "travel-ai-nginx status: ${NGINX_STATUS}, restarting: ${NGINX_RESTARTING} (${attempt}/30)"
+              NGINX_EXIT_CODE="$(docker container inspect --format='{{.State.ExitCode}}' travel-ai-nginx 2>/dev/null || echo unknown)"
+              echo "travel-ai-nginx status: ${NGINX_STATUS}, restarting: ${NGINX_RESTARTING}, exit_code: ${NGINX_EXIT_CODE} (${attempt}/40)"
               if [ "${NGINX_STATUS}" = "running" ] && [ "${NGINX_RESTARTING}" = "false" ]; then
-                return 0
+                STABLE_CHECKS=$((STABLE_CHECKS + 1))
+                if [ "${STABLE_CHECKS}" -ge 3 ]; then
+                  return 0
+                fi
+              else
+                STABLE_CHECKS=0
               fi
               sleep 2
             done
