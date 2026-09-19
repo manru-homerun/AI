@@ -43,6 +43,12 @@ def test_suggest_travel_spots_logs_model_unavailable_fallback(monkeypatch, caplo
 
     assert response.status_code == 200
     assert "fallback_reason=model_unavailable" in caplog.text
+    record = next(item for item in caplog.records if item.event == "recommend_fallback")
+    assert record.endpoint == "/recommend"
+    assert record.area_code == backend_payload["areaCode"]
+    assert record.trip_days == 2
+    assert record.runtime == "tiny_gru"
+    assert record.fallback_reason == "model_unavailable"
 
 
 def test_suggest_travel_spots_accepts_empty_content_id_sequence(monkeypatch, backend_payload) -> None:
@@ -156,6 +162,12 @@ def test_suggest_travel_spots_logs_inference_failure_before_fallback(monkeypatch
     assert response.status_code == 200
     assert "recommendation inference failed; using fallback recommendation response" in caplog.text
     assert "fallback_reason=inference_error" in caplog.text
+    record = next(item for item in caplog.records if item.event == "recommend_inference_failure")
+    assert record.endpoint == "/recommend"
+    assert record.area_code == backend_payload["areaCode"]
+    assert record.trip_days == 2
+    assert record.runtime == "tiny_gru"
+    assert record.fallback_reason == "inference_error"
 
 
 def test_recommend_internal_does_not_convert_unexpected_errors_to_400(monkeypatch) -> None:

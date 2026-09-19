@@ -67,6 +67,12 @@ def test_generate_travel_logs_model_unavailable_fallback(monkeypatch, caplog, ba
 
     assert response.status_code == 200
     assert "fallback_reason=model_unavailable" in caplog.text
+    record = next(item for item in caplog.records if item.event == "course_fallback")
+    assert record.endpoint == "/generate-course"
+    assert record.area_code == backend_payload["areaCode"]
+    assert record.trip_days == 2
+    assert record.runtime == "course_decoder"
+    assert record.fallback_reason == "model_unavailable"
 
 
 def test_generate_travel_logs_inference_error_fallback(monkeypatch, caplog, backend_payload) -> None:
@@ -78,6 +84,12 @@ def test_generate_travel_logs_inference_error_fallback(monkeypatch, caplog, back
 
     assert response.status_code == 200
     assert "fallback_reason=inference_error" in caplog.text
+    record = next(item for item in caplog.records if item.event == "course_inference_failure")
+    assert record.endpoint == "/generate-course"
+    assert record.area_code == backend_payload["areaCode"]
+    assert record.trip_days == 2
+    assert record.runtime == "course_decoder"
+    assert record.fallback_reason == "inference_error"
 
 
 def test_generate_travel_fallback_uses_area_specific_content_ids(monkeypatch, backend_payload) -> None:
