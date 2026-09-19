@@ -10,6 +10,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from src.core.config import COURSE_POIS_PER_DAY
+
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_ARTIFACT_DIR = ROOT / "artifacts" / "conditional_gru_decoder_experiment"
@@ -101,7 +103,7 @@ class OnnxCourseGenerator:
         allowed_content_ids: list[str] | None = None,
     ) -> tuple[list[str], list[GeneratedCourseStep]]:
         trip_days = max(int(trip_days), 1)
-        desired = int(desired_poi_count) if desired_poi_count is not None else trip_days * 3
+        desired = int(desired_poi_count) if desired_poi_count is not None else trip_days * COURSE_POIS_PER_DAY
         desired = max(desired, 1)
         forced_content_ids = list(forced_content_ids or [])
         if len(forced_content_ids) > desired:

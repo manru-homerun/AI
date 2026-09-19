@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Optional
+from typing import Any, Mapping, Optional
 
 from fastapi import HTTPException
 
-from src.core.config import SETTINGS, Settings
+from src.core.config import COURSE_POIS_PER_DAY, SETTINGS, Settings
 from src.core.logging import get_logger
 from src.fallback.travel import (
     build_fallback_course_payload,
@@ -27,6 +27,39 @@ from src.schemas.travel import (
 
 
 logger = get_logger(__name__)
+
+
+def _log_context(
+    *,
+    endpoint: str,
+    area_code: str,
+    trip_days: int | None,
+    runtime: str,
+    fallback_reason: str | None = None,
+) -> dict[str, Any]:
+    context: dict[str, Any] = {
+        "endpoint": endpoint,
+        "area_code": area_code,
+        "runtime": runtime,
+    }
+    if trip_days is not None:
+        context["trip_days"] = trip_days
+    if fallback_reason is not None:
+        context["fallback_reason"] = fallback_reason
+    return context
+
+
+def _raise_fallback_error(endpoint: str, exc: Exception, log_extra: Mapping[str, Any] | None = None) -> None:
+    extra = {"event": f"{endpoint}_fallback_failure", "fallback_reason": "unexpected_error"}
+    if log_extra is not None:
+        extra.update(log_extra)
+    extra["fallback_reason"] = "unexpected_error"
+    logger.exception(
+        "%s fallback response generation failed fallback_reason=unexpected_error",
+        endpoint,
+        extra=extra,
+    )
+    raise HTTPException(status_code=500, detail="fallback response generation failed") from exc
 
 
 def split_codes(value: str) -> list[str]:
@@ -117,6 +150,29 @@ def fallback_recommend_response(area_code: str, content_id_sequence: list[str]) 
     return RecommendResponse(recommendations=[RecommendItem(**item) for item in items])
 
 
+def fallback_course_response_or_500(
+    area_code: str,
+    trip_days: int,
+    forced_content_ids: list[str] | None = None,
+    log_extra: Mapping[str, Any] | None = None,
+) -> GenerateCourseResponse:
+    try:
+        return fallback_course_response(area_code, trip_days, forced_content_ids)
+    except Exception as exc:
+        _raise_fallback_error("course", exc, log_extra)
+
+
+def fallback_recommend_response_or_500(
+    area_code: str,
+    content_id_sequence: list[str],
+    log_extra: Mapping[str, Any] | None = None,
+) -> RecommendResponse:
+    try:
+        return fallback_recommend_response(area_code, content_id_sequence)
+    except Exception as exc:
+        _raise_fallback_error("recommend", exc, log_extra)
+
+
 def complete_area_limited_recommendations(
     area_code: str,
     seen: set[str],
@@ -162,10 +218,24 @@ class TravelService:
     def generate_travel_course(self, request: TravelGenerateRequest) -> GenerateCourseResponse:
         try:
             user_features, trip_days = travel_generate_request_to_user_features(request)
-            desired_poi_count = trip_days * 3
+            desired_poi_count = trip_days * COURSE_POIS_PER_DAY
             forced_content_ids = validate_forced_content_ids_fit(request.contentIdList, desired_poi_count)
             if runtime_state.COURSE_RUNTIME is None:
-                return fallback_course_response(request.areaCode, trip_days, forced_content_ids)
+                log_extra = {
+                    "event": "course_fallback",
+                    **_log_context(
+                        endpoint="/generate-course",
+                        area_code=request.areaCode,
+                        trip_days=trip_days,
+                        runtime="course_decoder",
+                        fallback_reason="model_unavailable",
+                    ),
+                }
+                logger.warning(
+                    "course runtime unavailable; using fallback course response fallback_reason=model_unavailable",
+                    extra=log_extra,
+                )
+                return fallback_course_response_or_500(request.areaCode, trip_days, forced_content_ids, log_extra)
             content_ids, steps = runtime_state.COURSE_RUNTIME.generate(
                 user_features=user_features,
                 trip_days=trip_days,
@@ -177,10 +247,38 @@ class TravelService:
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except Exception:
-            logger.exception("course inference failed; using fallback course response")
             trip_days = parse_int_choice("travelDuration", request.travelDuration, {1, 2, 3})
-            forced_content_ids = validate_forced_content_ids_fit(request.contentIdList, trip_days * 3)
-            return fallback_course_response(request.areaCode, trip_days, forced_content_ids)
+            forced_content_ids = validate_forced_content_ids_fit(
+                request.contentIdList,
+                trip_days * COURSE_POIS_PER_DAY,
+            )
+            log_extra = {
+                "event": "course_inference_failure",
+                **_log_context(
+                    endpoint="/generate-course",
+                    area_code=request.areaCode,
+                    trip_days=trip_days,
+                    runtime="course_decoder",
+                    fallback_reason="inference_error",
+                ),
+            }
+            logger.exception(
+                "course inference failed; using fallback course response fallback_reason=inference_error",
+                extra=log_extra,
+            )
+            return fallback_course_response_or_500(request.areaCode, trip_days, forced_content_ids, log_extra)
+        logger.info(
+            "course inference succeeded",
+            extra={
+                "event": "course_inference_success",
+                **_log_context(
+                    endpoint="/generate-course",
+                    area_code=request.areaCode,
+                    trip_days=trip_days,
+                    runtime="course_decoder",
+                ),
+            },
+        )
         return _course_response_from_payload(content_ids, steps)
 
     def suggest_travel_spots(self, request: TravelSpotSuggestionsRequest) -> RecommendResponse:
@@ -190,11 +288,40 @@ class TravelService:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     def recommend_for_backend(self, request: TravelSpotSuggestionsRequest) -> RecommendResponse:
-        user_features, _ = travel_generate_request_to_user_features(request)
+        user_features, trip_days = travel_generate_request_to_user_features(request)
         if not request.contentIdSequence:
-            return fallback_recommend_response(request.areaCode, [])
+            log_extra = {
+                "event": "recommend_fallback",
+                **_log_context(
+                    endpoint="/recommend",
+                    area_code=request.areaCode,
+                    trip_days=trip_days,
+                    runtime="tiny_gru",
+                    fallback_reason="empty_sequence",
+                ),
+            }
+            logger.info(
+                "recommendation skipped for empty content sequence; using fallback recommendation response",
+                extra=log_extra,
+            )
+            return fallback_recommend_response_or_500(request.areaCode, [], log_extra)
         if runtime_state.RUNTIME is None:
-            return fallback_recommend_response(request.areaCode, request.contentIdSequence)
+            log_extra = {
+                "event": "recommend_fallback",
+                **_log_context(
+                    endpoint="/recommend",
+                    area_code=request.areaCode,
+                    trip_days=trip_days,
+                    runtime="tiny_gru",
+                    fallback_reason="model_unavailable",
+                ),
+            }
+            logger.warning(
+                "recommendation runtime unavailable; using fallback recommendation response "
+                "fallback_reason=model_unavailable",
+                extra=log_extra,
+            )
+            return fallback_recommend_response_or_500(request.areaCode, request.contentIdSequence, log_extra)
 
         try:
             allowed_content_ids = set(fallback_content_ids_for_area(request.areaCode))
@@ -206,14 +333,53 @@ class TravelService:
                 top_k=self.settings.backend_recommendation_top_k,
             )
             if len(recommendations) == self.settings.backend_recommendation_top_k:
+                logger.info(
+                    "recommendation inference succeeded",
+                    extra={
+                        "event": "recommend_inference_success",
+                        **_log_context(
+                            endpoint="/recommend",
+                            area_code=request.areaCode,
+                            trip_days=trip_days,
+                            runtime="tiny_gru",
+                        ),
+                    },
+                )
                 return RecommendResponse(recommendations=recommendations)
             seen = {str(content_id) for content_id in request.contentIdSequence}
-            return complete_area_limited_recommendations(
+            response = complete_area_limited_recommendations(
                 request.areaCode,
                 seen,
                 recommendations,
                 self.settings.backend_recommendation_top_k,
             )
+            logger.info(
+                "recommendation inference succeeded",
+                extra={
+                    "event": "recommend_inference_success",
+                    **_log_context(
+                        endpoint="/recommend",
+                        area_code=request.areaCode,
+                        trip_days=trip_days,
+                        runtime="tiny_gru",
+                    ),
+                },
+            )
+            return response
         except Exception:
-            logger.exception("recommendation inference failed; using fallback recommendation response")
-            return fallback_recommend_response(request.areaCode, request.contentIdSequence)
+            log_extra = {
+                "event": "recommend_inference_failure",
+                **_log_context(
+                    endpoint="/recommend",
+                    area_code=request.areaCode,
+                    trip_days=trip_days,
+                    runtime="tiny_gru",
+                    fallback_reason="inference_error",
+                ),
+            }
+            logger.exception(
+                "recommendation inference failed; using fallback recommendation response "
+                "fallback_reason=inference_error",
+                extra=log_extra,
+            )
+            return fallback_recommend_response_or_500(request.areaCode, request.contentIdSequence, log_extra)

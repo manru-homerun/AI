@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
-
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
 from src.inference import runtime as runtime_state
 from src.schemas.travel import GenerateCourseResponse, RecommendResponse, TravelGenerateRequest, TravelSpotSuggestionsRequest
@@ -13,9 +12,24 @@ router = APIRouter()
 travel_service = TravelService()
 
 
+def _runtime_status_response() -> JSONResponse:
+    status_code = 200 if runtime_state.is_ready() else 503
+    return JSONResponse(status_code=status_code, content=runtime_state.health_payload())
+
+
+@router.get("/live")
+def live() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+@router.get("/ready")
+def ready() -> JSONResponse:
+    return _runtime_status_response()
+
+
 @router.get("/health")
-def health() -> dict[str, Any]:
-    return runtime_state.health_payload()
+def health() -> JSONResponse:
+    return _runtime_status_response()
 
 
 @router.post("/generate-course", response_model=GenerateCourseResponse)
