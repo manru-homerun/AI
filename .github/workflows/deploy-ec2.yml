@@ -79,8 +79,8 @@ jobs:
             echo "failed stage: ${FAILED_STAGE}"
             dc ps || true
             dc logs --tail=100 ai-api nginx || true
-            docker inspect travel-ai-api || true
-            docker inspect travel-ai-nginx || true
+            docker container inspect travel-ai-api || true
+            docker container inspect travel-ai-nginx || true
             docker exec travel-ai-nginx nginx -T || true
             echo "::endgroup::"
           }
@@ -88,7 +88,7 @@ jobs:
           check_legacy_project() {
             FAILED_STAGE="legacy project check"
             for container in travel-ai-api travel-ai-nginx; do
-              PROJECT_LABEL="$(docker inspect --format='{{ index .Config.Labels "com.docker.compose.project" }}' "${container}" 2>/dev/null || true)"
+              PROJECT_LABEL="$(docker container inspect --format='{{ index .Config.Labels "com.docker.compose.project" }}' "${container}" 2>/dev/null || true)"
               if [ "${PROJECT_LABEL}" = "current" ]; then
                 echo "Found ${container} from legacy Docker Compose project 'current'."
                 echo "Manual cleanup is required before deploying with project '${COMPOSE_PROJECT_NAME}'."
@@ -100,7 +100,7 @@ jobs:
           wait_for_ai_health() {
             FAILED_STAGE="ai-api healthcheck"
             for attempt in $(seq 1 30); do
-              HEALTH_STATUS="$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' travel-ai-api 2>/dev/null || echo missing)"
+              HEALTH_STATUS="$(docker container inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' travel-ai-api 2>/dev/null || echo missing)"
               echo "travel-ai-api health: ${HEALTH_STATUS} (${attempt}/30)"
               if [ "${HEALTH_STATUS}" = "healthy" ]; then
                 return 0
@@ -115,7 +115,7 @@ jobs:
 
           reload_nginx() {
             FAILED_STAGE="nginx reload"
-            if ! docker inspect travel-ai-nginx >/dev/null 2>&1; then
+            if ! docker container inspect travel-ai-nginx >/dev/null 2>&1; then
               echo "travel-ai-nginx does not exist; creating nginx service."
               FAILED_STAGE="nginx initial startup"
               dc up -d nginx || return 1
