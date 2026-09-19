@@ -88,7 +88,7 @@ class TravelGenerateRequest(BaseModel):
     hasChild: bool
     hasElderly: bool
     hasDisabled: bool
-    companionCount: int = Field(ge=1)
+    companionCount: int = Field(ge=0)
 
     @field_validator("areaCode")
     @classmethod
