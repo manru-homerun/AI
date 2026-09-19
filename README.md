@@ -74,16 +74,17 @@ curl -X POST http://127.0.0.1:8000/generate-course \
   -H "Content-Type: application/json" \
   -d '{
     "areaCode": "11000",
+    "contentIdList": ["2815426", "2773265"],
     "travelDuration": "2",
     "travelPersona": 3,
     "ageGroup": "30",
     "gender": "남",
     "travelerStyle": "4",
     "preferredArea": ["50110", "26350"],
-    "residenceArea": "11",
-    "hasChild": false,
-    "hasElderly": false,
-    "hasDisabled": false,
+    "residenceArea": "11000",
+    "hasChild": 0,
+    "hasElderly": 0,
+    "hasDisabled": 0,
     "companionCount": 1
   }'
 ```
@@ -110,9 +111,9 @@ curl -X POST http://127.0.0.1:8000/recommend \
   }'
 ```
 
-`areaCode` must be one of the supported backend region codes: `11000` Seoul, `41110` Suwon, `28000` Incheon, `30000` Daejeon, `27000` Daegu, `12000` Gwangju, `26000` Busan, or `48120` Changwon. Fallback responses use real `contentid` values from `data/processed/manual_keyword_search_sample.csv` for the requested region.
+`areaCode` must be one of the supported backend region codes: `11000` Seoul, `41110` Suwon, `28000` Incheon, `30000` Daejeon, `27000` Daegu, `12000` Gwangju, `26000` Busan, or `48120` Changwon. Backend-facing responses are constrained to the requested region's fallback/test `contentid` list even when the ONNX runtime is loaded.
 
-`travelPersona` must be an integer from 1 to 7. `preferredArea` must contain one to three 5-digit string codes. `travelerStyle` is expanded to the model's eight-slot style feature. `/generate-course` creates `travelDuration * 3` POIs, and `/recommend` always uses top 4 recommendations on the AI server side.
+`travelPersona` must be an integer from 1 to 7. `preferredArea` must contain one to three 5-digit string codes. `contentIdList` is required for `/generate-course`; its unique values are placed at the front of the generated course, and the remaining POIs are filled from the requested `areaCode` region. `travelerStyle` is expanded to the model's eight-slot style feature. `/generate-course` creates `travelDuration * 3` POIs, and `/recommend` always uses top 4 recommendations on the AI server side.
 
 ## EC2 Docker Deployment
 

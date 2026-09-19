@@ -97,10 +97,25 @@ class OnnxCourseGenerator:
         trip_days: int,
         desired_poi_count: int | None = None,
         duplicate_masking: bool = True,
+        forced_content_ids: list[str] | None = None,
+        allowed_content_ids: list[str] | None = None,
     ) -> tuple[list[str], list[GeneratedCourseStep]]:
         trip_days = max(int(trip_days), 1)
         desired = int(desired_poi_count) if desired_poi_count is not None else trip_days * 3
         desired = max(desired, 1)
+        forced_content_ids = list(forced_content_ids or [])
+        if len(forced_content_ids) > desired:
+            raise ValueError("forced_content_ids cannot exceed desired_poi_count")
+        allowed_token_ids: set[int] | None = None
+        if allowed_content_ids is not None:
+            allowed_token_ids = {
+                int(self.content_id_to_token[str(content_id)])
+                for content_id in allowed_content_ids
+                if str(content_id) in self.content_id_to_token
+            }
+            allowed_token_ids.difference_update(self.special_token_ids)
+            if not allowed_token_ids:
+                raise ValueError("allowed_content_ids do not match the model vocabulary")
         static_features = self.encode_static_features(user_features, trip_days, desired)
         step_rows, step_features = self.encode_step_features(trip_days, desired)
         hidden = self.user_session.run(None, {"static_features": static_features})[0].astype(np.float32)
@@ -118,15 +133,32 @@ class OnnxCourseGenerator:
             )
             scores = logits[0].astype(np.float32)
             scores[list(self.special_token_ids)] = -1e9
-            if duplicate_masking and generated_tokens:
-                scores[generated_tokens] = -1e9
-            if float(scores.max()) <= -1e8:
-                scores = logits[0].astype(np.float32)
-                scores[list(self.special_token_ids)] = -1e9
-            token_id = int(np.argmax(scores))
-            generated_tokens.append(token_id)
+            if allowed_token_ids is not None:
+                disallowed_token_ids = set(range(scores.shape[0])) - allowed_token_ids
+                scores[list(disallowed_token_ids)] = -1e9
+
+            if step_idx < len(forced_content_ids):
+                content_id = str(forced_content_ids[step_idx])
+                token_id = int(self.content_id_to_token.get(content_id, self.unk_token_id))
+                selected_score = float(logits[0][token_id]) if token_id != self.unk_token_id else 0.0
+            else:
+                if duplicate_masking and generated_tokens:
+                    scores[generated_tokens] = -1e9
+                if float(scores.max()) <= -1e8:
+                    scores = logits[0].astype(np.float32)
+                    scores[list(self.special_token_ids)] = -1e9
+                    if allowed_token_ids is not None:
+                        disallowed_token_ids = set(range(scores.shape[0])) - allowed_token_ids
+                        scores[list(disallowed_token_ids)] = -1e9
+                if float(scores.max()) <= -1e8:
+                    raise ValueError("no valid content_id candidates are available")
+                token_id = int(np.argmax(scores))
+                content_id = self.token_to_content_id.get(token_id, str(token_id))
+                selected_score = float(scores[token_id])
+
+            if token_id not in self.special_token_ids:
+                generated_tokens.append(token_id)
             current_token = np.asarray([token_id], dtype=np.int64)
-            content_id = self.token_to_content_id.get(token_id, str(token_id))
             steps.append(
                 GeneratedCourseStep(
                     rank=step_idx + 1,
@@ -134,7 +166,7 @@ class OnnxCourseGenerator:
                     slot_index=int(step_rows[step_idx]["slot_index"]),
                     content_id=content_id,
                     token_id=token_id,
-                    score=float(scores[token_id]),
+                    score=selected_score,
                 )
             )
         return [step.content_id for step in steps], steps

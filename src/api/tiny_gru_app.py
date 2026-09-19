@@ -57,26 +57,7 @@ class GenerateCourseResponse(BaseModel):
     steps: list[GenerateCourseStep]
 
 
-class TravelGenerateRequest(BaseModel):
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "areaCode": "11000",
-                "travelDuration": "2",
-                "travelPersona": 3,
-                "ageGroup": "30",
-                "gender": "남",
-                "travelerStyle": "4",
-                "preferredArea": ["50110", "26350"],
-                "residenceArea": "11",
-                "hasChild": False,
-                "hasElderly": False,
-                "hasDisabled": False,
-                "companionCount": 1,
-            }
-        }
-    )
-
+class TravelBackendRequest(BaseModel):
     areaCode: str
     travelDuration: str
     travelPersona: int = Field(ge=1, le=7)
@@ -107,7 +88,42 @@ class TravelGenerateRequest(BaseModel):
         return value
 
 
-class TravelSpotSuggestionsRequest(TravelGenerateRequest):
+class TravelGenerateRequest(TravelBackendRequest):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "areaCode": "11000",
+                "contentIdList": ["2815426", "2773265"],
+                "travelDuration": "2",
+                "travelPersona": 3,
+                "ageGroup": "30",
+                "gender": "남",
+                "travelerStyle": "4",
+                "preferredArea": ["50110", "26350"],
+                "residenceArea": "11000",
+                "hasChild": 0,
+                "hasElderly": 0,
+                "hasDisabled": 0,
+                "companionCount": 1,
+            }
+        }
+    )
+
+    contentIdList: list[str] = Field(min_length=1)
+
+    @field_validator("contentIdList")
+    @classmethod
+    def validate_content_id_list(cls, value: list[str]) -> list[str]:
+        normalized: list[str] = []
+        for content_id in value:
+            normalized_content_id = str(content_id).strip()
+            if not re.fullmatch(r"\d+", normalized_content_id):
+                raise ValueError("contentIdList items must be digit strings")
+            normalized.append(normalized_content_id)
+        return normalized
+
+
+class TravelSpotSuggestionsRequest(TravelBackendRequest):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
@@ -129,6 +145,17 @@ class TravelSpotSuggestionsRequest(TravelGenerateRequest):
     )
 
     contentIdSequence: list[str] = Field(min_length=1)
+
+    @field_validator("contentIdSequence")
+    @classmethod
+    def validate_content_id_sequence(cls, value: list[str]) -> list[str]:
+        normalized: list[str] = []
+        for content_id in value:
+            normalized_content_id = str(content_id).strip()
+            if not re.fullmatch(r"\d+", normalized_content_id):
+                raise ValueError("contentIdSequence items must be digit strings")
+            normalized.append(normalized_content_id)
+        return normalized
 
 
 def load_runtime(artifact_dir: Path) -> dict[str, Any]:
@@ -175,7 +202,7 @@ def parse_int_choice(field_name: str, value: str, allowed_values: set[int]) -> i
     return parsed
 
 
-def travel_generate_request_to_user_features(request: TravelGenerateRequest) -> tuple[dict[str, Any], int]:
+def travel_generate_request_to_user_features(request: TravelBackendRequest) -> tuple[dict[str, Any], int]:
     trip_days = parse_int_choice("travelDuration", request.travelDuration, {1, 2, 3})
     p0_age = parse_int_choice("ageGroup", request.ageGroup, {20, 30, 40, 50, 60})
     style_codes = split_codes(request.travelerStyle)
@@ -445,10 +472,58 @@ def fallback_content_ids_for_area(area_code: str) -> list[str]:
     return FALLBACK_CONTENT_IDS_BY_AREA[str(area_code).strip()]
 
 
-def fallback_course_response(area_code: str, trip_days: int) -> GenerateCourseResponse:
-    desired_poi_count = max(int(trip_days), 1) * 3
+def unique_preserve_order(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    unique_values: list[str] = []
+    for value in values:
+        normalized = str(value).strip()
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        unique_values.append(normalized)
+    return unique_values
+
+
+def validate_forced_content_ids_fit(forced_content_ids: list[str], desired_poi_count: int) -> list[str]:
+    unique_content_ids = unique_preserve_order(forced_content_ids)
+    if len(unique_content_ids) > desired_poi_count:
+        raise ValueError("contentIdList cannot contain more unique items than the generated course length")
+    return unique_content_ids
+
+
+def build_area_limited_course_ids(
+    area_code: str,
+    desired_poi_count: int,
+    forced_content_ids: list[str] | None = None,
+) -> list[str]:
+    content_ids = unique_preserve_order(forced_content_ids or [])
     area_content_ids = fallback_content_ids_for_area(area_code)
-    content_ids = [area_content_ids[index % len(area_content_ids)] for index in range(desired_poi_count)]
+    seen = set(content_ids)
+    while len(content_ids) < desired_poi_count:
+        before_count = len(content_ids)
+        for area_content_id in area_content_ids:
+            if area_content_id in seen:
+                continue
+            content_ids.append(area_content_id)
+            seen.add(area_content_id)
+            if len(content_ids) == desired_poi_count:
+                break
+        if len(content_ids) == before_count:
+            for area_content_id in area_content_ids:
+                content_ids.append(area_content_id)
+                if len(content_ids) == desired_poi_count:
+                    break
+    return content_ids
+
+
+def fallback_course_response(
+    area_code: str,
+    trip_days: int,
+    forced_content_ids: list[str] | None = None,
+) -> GenerateCourseResponse:
+    desired_poi_count = max(int(trip_days), 1) * 3
+    forced_content_ids = validate_forced_content_ids_fit(forced_content_ids or [], desired_poi_count)
+    content_ids = build_area_limited_course_ids(area_code, desired_poi_count, forced_content_ids)
     return GenerateCourseResponse(
         content_id_sequence=content_ids,
         steps=[
@@ -483,12 +558,50 @@ def fallback_recommend_response(area_code: str, content_id_sequence: list[str]) 
     )
 
 
+def complete_area_limited_recommendations(
+    area_code: str,
+    seen: set[str],
+    recommendations: list[RecommendItem],
+) -> RecommendResponse:
+    area_content_ids = fallback_content_ids_for_area(area_code)
+    recommended_ids = {item.content_id for item in recommendations}
+    for content_id in area_content_ids:
+        if content_id in seen or content_id in recommended_ids:
+            continue
+        recommendations.append(
+            RecommendItem(
+                content_id=content_id,
+                token_id=len(recommendations) + 3,
+                score=1.0 - (len(recommendations) * 0.05),
+            )
+        )
+        recommended_ids.add(content_id)
+        if len(recommendations) == BACKEND_RECOMMENDATION_TOP_K:
+            break
+    if len(recommendations) < BACKEND_RECOMMENDATION_TOP_K:
+        for content_id in area_content_ids:
+            if content_id in recommended_ids:
+                continue
+            recommendations.append(
+                RecommendItem(
+                    content_id=content_id,
+                    token_id=len(recommendations) + 3,
+                    score=1.0 - (len(recommendations) * 0.05),
+                )
+            )
+            recommended_ids.add(content_id)
+            if len(recommendations) == BACKEND_RECOMMENDATION_TOP_K:
+                break
+    return RecommendResponse(recommendations=recommendations[:BACKEND_RECOMMENDATION_TOP_K])
+
+
 def recommend_for_backend(request: TravelSpotSuggestionsRequest) -> RecommendResponse:
     if RUNTIME is None:
         return fallback_recommend_response(request.areaCode, request.contentIdSequence)
 
     try:
         user_features, _ = travel_generate_request_to_user_features(request)
+        allowed_content_ids = set(fallback_content_ids_for_area(request.areaCode))
         content_id_to_token = RUNTIME["content_id_to_token"]
         unk_token = RUNTIME["unk_token"]
         tokens = [
@@ -513,7 +626,7 @@ def recommend_for_backend(request: TravelSpotSuggestionsRequest) -> RecommendRes
         recommendations: list[RecommendItem] = []
         for token_id in order:
             content_id = RUNTIME["token_to_content_id"].get(int(token_id), str(token_id))
-            if content_id in seen:
+            if content_id in seen or content_id not in allowed_content_ids:
                 continue
             recommendations.append(
                 RecommendItem(
@@ -524,6 +637,7 @@ def recommend_for_backend(request: TravelSpotSuggestionsRequest) -> RecommendRes
             )
             if len(recommendations) == BACKEND_RECOMMENDATION_TOP_K:
                 return RecommendResponse(recommendations=recommendations)
+        return complete_area_limited_recommendations(request.areaCode, seen, recommendations)
     except Exception:
         pass
     return fallback_recommend_response(request.areaCode, request.contentIdSequence)
@@ -533,19 +647,24 @@ def recommend_for_backend(request: TravelSpotSuggestionsRequest) -> RecommendRes
 def generate_travel(request: TravelGenerateRequest) -> GenerateCourseResponse:
     try:
         user_features, trip_days = travel_generate_request_to_user_features(request)
+        desired_poi_count = trip_days * 3
+        forced_content_ids = validate_forced_content_ids_fit(request.contentIdList, desired_poi_count)
         if COURSE_RUNTIME is None:
-            return fallback_course_response(request.areaCode, trip_days)
+            return fallback_course_response(request.areaCode, trip_days, forced_content_ids)
         content_ids, steps = COURSE_RUNTIME.generate(
             user_features=user_features,
             trip_days=trip_days,
-            desired_poi_count=None,
+            desired_poi_count=desired_poi_count,
             duplicate_masking=True,
+            forced_content_ids=forced_content_ids,
+            allowed_content_ids=fallback_content_ids_for_area(request.areaCode),
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception:
         trip_days = parse_int_choice("travelDuration", request.travelDuration, {1, 2, 3})
-        return fallback_course_response(request.areaCode, trip_days)
+        forced_content_ids = validate_forced_content_ids_fit(request.contentIdList, trip_days * 3)
+        return fallback_course_response(request.areaCode, trip_days, forced_content_ids)
     return GenerateCourseResponse(
         content_id_sequence=content_ids,
         steps=[
