@@ -59,8 +59,6 @@ def recommend_internal(request: RecommendRequest) -> RecommendResponse:
         return _recommend_internal(runtime_state.RUNTIME, request)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"invalid user_features: {exc}") from exc
 
 
 def generate_course_internal(request: GenerateCourseRequest) -> GenerateCourseResponse:
@@ -73,7 +71,7 @@ def generate_course_internal(request: GenerateCourseRequest) -> GenerateCourseRe
             desired_poi_count=request.desired_poi_count,
             duplicate_masking=True,
         )
-    except Exception as exc:
+    except ValueError as exc:
         raise HTTPException(status_code=400, detail=f"invalid course generation request: {exc}") from exc
     return GenerateCourseResponse(
         content_id_sequence=content_ids,

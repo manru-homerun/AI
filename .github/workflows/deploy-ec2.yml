@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EC2_APP_DIR: ${{ secrets.EC2_APP_DIR || '/opt/travel-ai' }}
-      HEALTHCHECK_URL: https://${{ secrets.EC2_HOST }}/health
+      HEALTHCHECK_URL: https://${{ secrets.EC2_HOST }}/ready
 
     steps:
       - name: Checkout

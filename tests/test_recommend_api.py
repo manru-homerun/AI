@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import logging
+
 import numpy as np
+import pytest
 from fastapi.testclient import TestClient
 
 from conftest import AREA_FALLBACK_IDS, DummyFeatureEncoder, DummyRecommendSession
@@ -24,6 +27,22 @@ def test_suggest_travel_spots_returns_four_fallback_items(monkeypatch, backend_p
     assert len(recommendations) == 4
     assert {item["content_id"] for item in recommendations}.isdisjoint(payload["contentIdSequence"])
     assert {item["content_id"] for item in recommendations}.issubset(AREA_FALLBACK_IDS["11000"])
+
+
+def test_suggest_travel_spots_logs_model_unavailable_fallback(monkeypatch, caplog, backend_payload) -> None:
+    monkeypatch.setattr(runtime_state, "RUNTIME", None)
+    caplog.set_level(logging.WARNING)
+    client = TestClient(tiny_gru_app.app)
+    payload = {
+        **backend_payload,
+        "contentIdSequence": AREA_FALLBACK_IDS["11000"][:2],
+    }
+    payload.pop("contentIdList")
+
+    response = client.post("/recommend", json=payload)
+
+    assert response.status_code == 200
+    assert "fallback_reason=model_unavailable" in caplog.text
 
 
 def test_suggest_travel_spots_accepts_empty_content_id_sequence(monkeypatch, backend_payload) -> None:
@@ -130,8 +149,24 @@ def test_suggest_travel_spots_logs_inference_failure_before_fallback(monkeypatch
     client = TestClient(tiny_gru_app.app)
     payload = {**backend_payload, "contentIdSequence": seoul_ids[:2]}
     payload.pop("contentIdList")
+    caplog.set_level(logging.ERROR)
 
     response = client.post("/recommend", json=payload)
 
     assert response.status_code == 200
     assert "recommendation inference failed; using fallback recommendation response" in caplog.text
+    assert "fallback_reason=inference_error" in caplog.text
+
+
+def test_recommend_internal_does_not_convert_unexpected_errors_to_400(monkeypatch) -> None:
+    monkeypatch.setattr(runtime_state, "RUNTIME", {"session": object()})
+
+    def raise_unexpected(*_args, **_kwargs):
+        raise RuntimeError("unexpected recommender failure")
+
+    monkeypatch.setattr(tiny_gru_app, "_recommend_internal", raise_unexpected)
+
+    with pytest.raises(RuntimeError):
+        tiny_gru_app.recommend_internal(
+            tiny_gru_app.RecommendRequest(content_id_sequence=["1"], user_features={}, top_k=1)
+        )

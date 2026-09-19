@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import logging
+
+import pytest
 from fastapi.testclient import TestClient
 
 from conftest import AREA_FALLBACK_IDS
@@ -35,6 +38,11 @@ class DummyCourseRuntime:
         return content_ids, steps
 
 
+class FailingCourseRuntime:
+    def generate(self, *_args, **_kwargs):
+        raise RuntimeError("course decoder exploded")
+
+
 def test_generate_travel_returns_fallback_with_content_id_list_prefix(monkeypatch, backend_payload) -> None:
     monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", None)
     client = TestClient(tiny_gru_app.app)
@@ -48,6 +56,28 @@ def test_generate_travel_returns_fallback_with_content_id_list_prefix(monkeypatc
     assert body["steps"][0]["day_index"] == 1
     assert body["steps"][3]["day_index"] == 2
     assert set(body["content_id_sequence"][2:]).issubset(AREA_FALLBACK_IDS["11000"])
+
+
+def test_generate_travel_logs_model_unavailable_fallback(monkeypatch, caplog, backend_payload) -> None:
+    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", None)
+    caplog.set_level(logging.WARNING)
+    client = TestClient(tiny_gru_app.app)
+
+    response = client.post("/generate-course", json=backend_payload)
+
+    assert response.status_code == 200
+    assert "fallback_reason=model_unavailable" in caplog.text
+
+
+def test_generate_travel_logs_inference_error_fallback(monkeypatch, caplog, backend_payload) -> None:
+    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", FailingCourseRuntime())
+    caplog.set_level(logging.ERROR)
+    client = TestClient(tiny_gru_app.app)
+
+    response = client.post("/generate-course", json=backend_payload)
+
+    assert response.status_code == 200
+    assert "fallback_reason=inference_error" in caplog.text
 
 
 def test_generate_travel_fallback_uses_area_specific_content_ids(monkeypatch, backend_payload) -> None:
@@ -158,18 +188,57 @@ def test_area_code_must_be_supported(backend_payload) -> None:
     assert response.status_code == 422
 
 
-def test_health_reports_degraded_when_runtimes_are_missing(monkeypatch) -> None:
+def test_health_and_ready_report_degraded_with_503_when_runtimes_are_missing(monkeypatch) -> None:
+    monkeypatch.setattr(runtime_state, "RUNTIME", None)
+    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", None)
+    monkeypatch.setattr(runtime_state, "RUNTIME_ERROR", "sensitive /tmp/model failure")
+    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME_ERROR", "sensitive /tmp/course failure")
+    client = TestClient(tiny_gru_app.app)
+
+    for path in ("/health", "/ready"):
+        response = client.get(path)
+
+        assert response.status_code == 503
+        body = response.json()
+        assert body == {
+            "status": "degraded",
+            "tiny_gru_loaded": False,
+            "course_decoder_loaded": False,
+        }
+        assert "sensitive" not in response.text
+        assert "/tmp" not in response.text
+
+
+def test_health_and_ready_report_ok_when_runtimes_are_loaded(monkeypatch) -> None:
+    monkeypatch.setattr(runtime_state, "RUNTIME", {"session": object()})
+    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", DummyCourseRuntime())
+    client = TestClient(tiny_gru_app.app)
+
+    for path in ("/health", "/ready"):
+        response = client.get(path)
+
+        assert response.status_code == 200
+        assert response.json()["status"] == "ok"
+
+
+def test_live_reports_ok_when_runtimes_are_missing(monkeypatch) -> None:
     monkeypatch.setattr(runtime_state, "RUNTIME", None)
     monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", None)
     client = TestClient(tiny_gru_app.app)
 
-    response = client.get("/health")
+    response = client.get("/live")
 
     assert response.status_code == 200
-    body = response.json()
-    assert body["status"] == "degraded"
-    assert body["tiny_gru_loaded"] is False
-    assert body["course_decoder_loaded"] is False
+    assert response.json() == {"status": "ok"}
+
+
+def test_generate_course_internal_does_not_convert_unexpected_errors_to_400(monkeypatch) -> None:
+    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", FailingCourseRuntime())
+
+    with pytest.raises(RuntimeError):
+        tiny_gru_app.generate_course_internal(
+            tiny_gru_app.GenerateCourseRequest(user_features={}, trip_days=1, desired_poi_count=3)
+        )
 
 
 def test_swagger_examples_use_backend_contract_defaults() -> None:
@@ -179,7 +248,7 @@ def test_swagger_examples_use_backend_contract_defaults() -> None:
 
     assert response.status_code == 200
     openapi = response.json()
-    assert sorted(openapi["paths"]) == ["/generate-course", "/health", "/recommend"]
+    assert sorted(openapi["paths"]) == ["/generate-course", "/health", "/live", "/ready", "/recommend"]
     schemas = openapi["components"]["schemas"]
     generate_example = schemas["TravelGenerateRequest"]["example"]
     suggestions_example = schemas["TravelSpotSuggestionsRequest"]["example"]
