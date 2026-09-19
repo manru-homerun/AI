@@ -191,6 +191,8 @@ class TravelService:
 
     def recommend_for_backend(self, request: TravelSpotSuggestionsRequest) -> RecommendResponse:
         user_features, _ = travel_generate_request_to_user_features(request)
+        if not request.contentIdSequence:
+            return fallback_recommend_response(request.areaCode, [])
         if runtime_state.RUNTIME is None:
             return fallback_recommend_response(request.areaCode, request.contentIdSequence)
 

@@ -132,7 +132,7 @@ class TravelSpotSuggestionsRequest(TravelBackendRequest):
         }
     )
 
-    contentIdSequence: list[str] = Field(min_length=1)
+    contentIdSequence: list[str]
 
     @field_validator("contentIdSequence")
     @classmethod

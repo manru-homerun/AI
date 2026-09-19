@@ -26,6 +26,25 @@ def test_suggest_travel_spots_returns_four_fallback_items(monkeypatch, backend_p
     assert {item["content_id"] for item in recommendations}.issubset(AREA_FALLBACK_IDS["11000"])
 
 
+def test_suggest_travel_spots_accepts_empty_content_id_sequence(monkeypatch, backend_payload) -> None:
+    monkeypatch.setattr(runtime_state, "RUNTIME", DummyRecommendSession(np.ones(8, dtype=np.float32)))
+    client = TestClient(tiny_gru_app.app)
+    payload = {
+        **backend_payload,
+        "companionCount": 0,
+        "contentIdSequence": [],
+        "gender": "남",
+        "residenceArea": "11",
+    }
+    payload.pop("contentIdList")
+
+    response = client.post("/recommend", json=payload)
+
+    assert response.status_code == 200
+    recommended_ids = [item["content_id"] for item in response.json()["recommendations"]]
+    assert recommended_ids == AREA_FALLBACK_IDS["11000"][:4]
+
+
 def test_suggest_travel_spots_fallback_uses_area_specific_content_ids(monkeypatch, backend_payload) -> None:
     monkeypatch.setattr(runtime_state, "RUNTIME", None)
     client = TestClient(tiny_gru_app.app)
