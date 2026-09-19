@@ -97,7 +97,7 @@ class TravelGenerateRequest(TravelBackendRequest):
         }
     )
 
-    contentIdList: list[str] = Field(min_length=1)
+    contentIdList: list[str]
 
     @field_validator("contentIdList")
     @classmethod
