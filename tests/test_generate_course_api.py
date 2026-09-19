@@ -91,7 +91,8 @@ def test_content_id_list_validation(backend_payload) -> None:
         json={**backend_payload, "contentIdList": [str(index) for index in range(7)]},
     )
 
-    assert empty_response.status_code == 422
+    assert empty_response.status_code == 200
+    assert empty_response.json()["content_id_sequence"] == AREA_FALLBACK_IDS["11000"][:6]
     assert bad_response.status_code == 422
     assert too_long_response.status_code == 400
 
