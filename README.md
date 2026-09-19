@@ -166,7 +166,14 @@ After certificate renewal, reload Nginx:
 docker exec travel-ai-nginx nginx -s reload
 ```
 
-GitHub Actions deployment does not use a Deploy Key. The workflow checks out the repo inside GitHub Actions, creates a source bundle, uploads it to EC2 over SSH/SCP, switches `/opt/travel-ai/current`, runs Docker Compose, and checks `https://<EC2_HOST>/health`.
+When switching releases or changing `nginx/nginx.conf`, recreate Nginx so the bind-mounted config points at the current release:
+
+```bash
+docker compose up -d --no-deps --force-recreate nginx
+docker compose exec nginx nginx -t
+```
+
+GitHub Actions deployment does not use a Deploy Key. The workflow checks out the repo inside GitHub Actions, creates a source bundle, uploads it to EC2 over SSH/SCP, switches `/opt/travel-ai/current`, runs Docker Compose, and checks `https://<EC2_HOST>/ready`.
 
 Required GitHub Secrets:
 
@@ -193,7 +200,7 @@ Deployment verification:
 ```bash
 docker compose ps
 docker compose exec nginx nginx -t
-curl --fail https://13.125.237.207/health
+curl --fail https://13.125.237.207/ready
 ```
 
 ## Dependency Layout
