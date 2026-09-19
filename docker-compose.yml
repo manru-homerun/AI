@@ -1,3 +1,5 @@
+name: travel-ai
+
 services:
   ai-api:
     build:
