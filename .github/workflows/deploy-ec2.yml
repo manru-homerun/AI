@@ -54,57 +54,160 @@ jobs:
           scp -i ~/.ssh/deploy_key "${SOURCE_BUNDLE}" "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${EC2_APP_DIR}/releases/${GITHUB_SHA}/source.tar.gz"
 
       - name: Deploy with Docker Compose
+        env:
+          REMOTE_EC2_APP_DIR: ${{ env.EC2_APP_DIR }}
+          REMOTE_GITHUB_SHA: ${{ github.sha }}
+          REMOTE_HEALTHCHECK_URL: ${{ env.HEALTHCHECK_URL }}
         run: |
-          ssh -i ~/.ssh/deploy_key "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" << EOF
+          ssh -i ~/.ssh/deploy_key "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" \
+            "EC2_APP_DIR='${REMOTE_EC2_APP_DIR}' GITHUB_SHA='${REMOTE_GITHUB_SHA}' HEALTHCHECK_URL='${REMOTE_HEALTHCHECK_URL}' bash -s" <<'EOF'
           set -euo pipefail
+
           APP_DIR="${EC2_APP_DIR}"
-          RELEASE_DIR="\${APP_DIR}/releases/${GITHUB_SHA}"
+          RELEASE_DIR="${APP_DIR}/releases/${GITHUB_SHA}"
+          COMPOSE_PROJECT_NAME="travel-ai"
           PREVIOUS_TARGET=""
-          if [ -L "\${APP_DIR}/current" ]; then
-            PREVIOUS_TARGET="\$(readlink -f "\${APP_DIR}/current")"
-          fi
-          tar -xzf "\${RELEASE_DIR}/source.tar.gz" -C "\${RELEASE_DIR}"
-          rm "\${RELEASE_DIR}/source.tar.gz"
-          printf '%s\n' "${GITHUB_SHA}" > "\${RELEASE_DIR}/REVISION"
-          ln -sfn "\${RELEASE_DIR}" "\${APP_DIR}/current"
-          cd "\${APP_DIR}/current"
-          docker compose build ai-api
-          docker compose up -d
-          docker compose ps
-          verify_deployment() {
-            for attempt in \$(seq 1 30); do
-              HEALTH_STATUS="\$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' travel-ai-api)"
-              if [ "\${HEALTH_STATUS}" = "healthy" ]; then
-                break
+          FAILED_STAGE="initialization"
+
+          dc() {
+            echo "+ docker compose -p ${COMPOSE_PROJECT_NAME} $*"
+            docker compose -p "${COMPOSE_PROJECT_NAME}" "$@"
+          }
+
+          show_diagnostics() {
+            echo "::group::deployment diagnostics"
+            echo "failed stage: ${FAILED_STAGE}"
+            dc ps || true
+            dc logs --tail=100 ai-api nginx || true
+            docker inspect travel-ai-api || true
+            docker inspect travel-ai-nginx || true
+            docker exec travel-ai-nginx nginx -T || true
+            echo "::endgroup::"
+          }
+
+          check_legacy_project() {
+            FAILED_STAGE="legacy project check"
+            for container in travel-ai-api travel-ai-nginx; do
+              PROJECT_LABEL="$(docker inspect --format='{{ index .Config.Labels "com.docker.compose.project" }}' "${container}" 2>/dev/null || true)"
+              if [ "${PROJECT_LABEL}" = "current" ]; then
+                echo "Found ${container} from legacy Docker Compose project 'current'."
+                echo "Manual cleanup is required before deploying with project '${COMPOSE_PROJECT_NAME}'."
+                return 1
               fi
-              if [ "\${attempt}" -eq 30 ]; then
-                docker compose ps
-                docker compose logs --tail=100 ai-api nginx
+            done
+          }
+
+          wait_for_ai_health() {
+            FAILED_STAGE="ai-api healthcheck"
+            for attempt in $(seq 1 30); do
+              HEALTH_STATUS="$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' travel-ai-api 2>/dev/null || echo missing)"
+              echo "travel-ai-api health: ${HEALTH_STATUS} (${attempt}/30)"
+              if [ "${HEALTH_STATUS}" = "healthy" ]; then
+                return 0
+              fi
+              if [ "${HEALTH_STATUS}" = "unhealthy" ]; then
                 return 1
               fi
               sleep 2
             done
-
-            for attempt in \$(seq 1 15); do
-              if curl -fsS --max-time 5 "${HEALTHCHECK_URL}"; then
-                return 0
-              fi
-              sleep 2
-            done
-
-            docker compose ps
-            docker compose logs --tail=100 ai-api nginx
             return 1
           }
 
-          if ! verify_deployment; then
-            if [ -n "\${PREVIOUS_TARGET}" ] && [ -d "\${PREVIOUS_TARGET}" ]; then
-              ln -sfn "\${PREVIOUS_TARGET}" "\${APP_DIR}/current"
-              cd "\${APP_DIR}/current"
-              docker compose up -d --build
+          reload_nginx() {
+            FAILED_STAGE="nginx reload"
+            if ! docker inspect travel-ai-nginx >/dev/null 2>&1; then
+              echo "travel-ai-nginx does not exist; creating nginx service."
+              FAILED_STAGE="nginx initial startup"
+              dc up -d nginx || return 1
+            fi
+
+            FAILED_STAGE="nginx configuration"
+            echo "+ docker exec travel-ai-nginx nginx -t"
+            docker exec travel-ai-nginx nginx -t || return 1
+
+            FAILED_STAGE="nginx reload"
+            echo "+ docker exec travel-ai-nginx nginx -s reload"
+            docker exec travel-ai-nginx nginx -s reload || return 1
+          }
+
+          check_external_health() {
+            FAILED_STAGE="external HTTPS healthcheck"
+            for attempt in $(seq 1 15); do
+              if curl -fsS --max-time 5 "${HEALTHCHECK_URL}"; then
+                echo
+                echo "external healthcheck succeeded"
+                return 0
+              fi
+              echo "external healthcheck failed (${attempt}/15)"
+              sleep 2
+            done
+            return 1
+          }
+
+          rollback() {
+            if [ -z "${PREVIOUS_TARGET}" ] || [ ! -d "${PREVIOUS_TARGET}" ]; then
+              echo "No previous release is available for rollback."
+              return 1
+            fi
+
+            echo "Rolling back to ${PREVIOUS_TARGET}"
+            ln -sfn "${PREVIOUS_TARGET}" "${APP_DIR}/current"
+            cd "${APP_DIR}/current"
+
+            FAILED_STAGE="rollback ai-api image build"
+            dc build ai-api || return 1
+
+            FAILED_STAGE="rollback ai-api startup"
+            dc up -d --no-deps ai-api || return 1
+
+            wait_for_ai_health || return 1
+            reload_nginx || return 1
+            echo "rollback completed"
+          }
+
+          deploy_release() {
+            FAILED_STAGE="ai-api image build"
+            dc build ai-api || return 1
+
+            FAILED_STAGE="ai-api startup"
+            dc up -d --no-deps ai-api || return 1
+
+            wait_for_ai_health || return 1
+            reload_nginx || return 1
+            check_external_health || return 1
+          }
+
+          if [ -L "${APP_DIR}/current" ]; then
+            PREVIOUS_TARGET="$(readlink -f "${APP_DIR}/current")"
+          fi
+
+          FAILED_STAGE="release extraction"
+          tar -xzf "${RELEASE_DIR}/source.tar.gz" -C "${RELEASE_DIR}"
+          rm "${RELEASE_DIR}/source.tar.gz"
+          printf '%s\n' "${GITHUB_SHA}" > "${RELEASE_DIR}/REVISION"
+
+          FAILED_STAGE="current symlink update"
+          ln -sfn "${RELEASE_DIR}" "${APP_DIR}/current"
+          cd "${APP_DIR}/current"
+
+          if ! check_legacy_project; then
+            show_diagnostics
+            if [ -n "${PREVIOUS_TARGET}" ] && [ -d "${PREVIOUS_TARGET}" ]; then
+              ln -sfn "${PREVIOUS_TARGET}" "${APP_DIR}/current"
             fi
             exit 1
           fi
+
+          if ! deploy_release; then
+            show_diagnostics
+            if ! rollback; then
+              echo "rollback failed"
+              show_diagnostics
+            fi
+            exit 1
+          fi
+
+          dc ps
           EOF
 
       - name: Cleanup SSH key
