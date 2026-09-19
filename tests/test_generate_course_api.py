@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from conftest import AREA_FALLBACK_IDS
 from src.api import tiny_gru_app
+from src.core.config import COURSE_POIS_PER_DAY
 from src.inference import runtime as runtime_state
 
 
@@ -20,15 +21,15 @@ class DummyCourseRuntime:
         forced_content_ids=None,
         allowed_content_ids=None,
     ):
-        desired = int(desired_poi_count or trip_days * 3)
+        desired = int(desired_poi_count or trip_days * COURSE_POIS_PER_DAY)
         forced = list(forced_content_ids or [])
         allowed = [content_id for content_id in allowed_content_ids or [] if content_id not in forced]
         content_ids = [*forced, *allowed[: desired - len(forced)]]
         steps = [
             tiny_gru_app.GenerateCourseStep(
                 rank=index + 1,
-                day_index=index // 3 + 1,
-                slot_index=index % 3 + 1,
+                day_index=index // COURSE_POIS_PER_DAY + 1,
+                slot_index=index % COURSE_POIS_PER_DAY + 1,
                 content_id=content_id,
                 token_id=index + 3,
                 score=1.0 - (index * 0.01),
@@ -51,10 +52,14 @@ def test_generate_travel_returns_fallback_with_content_id_list_prefix(monkeypatc
 
     assert response.status_code == 200
     body = response.json()
-    assert len(body["content_id_sequence"]) == 6
+    assert len(body["content_id_sequence"]) == 12
     assert body["content_id_sequence"][:2] == backend_payload["contentIdList"]
     assert body["steps"][0]["day_index"] == 1
-    assert body["steps"][3]["day_index"] == 2
+    assert body["steps"][0]["slot_index"] == 1
+    assert body["steps"][5]["day_index"] == 1
+    assert body["steps"][5]["slot_index"] == 6
+    assert body["steps"][6]["day_index"] == 2
+    assert body["steps"][6]["slot_index"] == 1
     assert set(body["content_id_sequence"][2:]).issubset(AREA_FALLBACK_IDS["11000"])
 
 
@@ -105,10 +110,10 @@ def test_generate_travel_fallback_uses_area_specific_content_ids(monkeypatch, ba
 
         assert response.status_code == 200
         body = response.json()
-        assert len(body["content_id_sequence"]) == 6
+        assert len(body["content_id_sequence"]) == 12
         assert body["content_id_sequence"][:2] == content_id_list
         assert set(body["content_id_sequence"][2:]).issubset(area_content_ids)
-        assert body["content_id_sequence"] == area_content_ids[:6]
+        assert body["content_id_sequence"] == area_content_ids[:12]
 
 
 def test_generate_travel_runtime_uses_area_specific_content_ids(monkeypatch, backend_payload) -> None:
@@ -118,6 +123,8 @@ def test_generate_travel_runtime_uses_area_specific_content_ids(monkeypatch, bac
     response = client.post("/generate-course", json=backend_payload)
 
     assert response.status_code == 200
+    body = response.json()
+    assert len(body["content_id_sequence"]) == 12
     content_ids = response.json()["content_id_sequence"]
     assert content_ids[:2] == backend_payload["contentIdList"]
     assert set(content_ids[2:]).issubset(AREA_FALLBACK_IDS["11000"])
@@ -128,15 +135,22 @@ def test_content_id_list_validation(backend_payload) -> None:
 
     empty_response = client.post("/generate-course", json={**backend_payload, "contentIdList": []})
     bad_response = client.post("/generate-course", json={**backend_payload, "contentIdList": ["2815426", "abc"]})
+    exactly_full_response = client.post(
+        "/generate-course",
+        json={**backend_payload, "contentIdList": [str(index) for index in range(12)]},
+    )
     too_long_response = client.post(
         "/generate-course",
-        json={**backend_payload, "contentIdList": [str(index) for index in range(7)]},
+        json={**backend_payload, "contentIdList": [str(index) for index in range(13)]},
     )
 
     assert empty_response.status_code == 200
-    assert empty_response.json()["content_id_sequence"] == AREA_FALLBACK_IDS["11000"][:6]
+    assert empty_response.json()["content_id_sequence"] == AREA_FALLBACK_IDS["11000"][:12]
     assert bad_response.status_code == 422
+    assert exactly_full_response.status_code == 200
+    assert exactly_full_response.json()["content_id_sequence"] == [str(index) for index in range(12)]
     assert too_long_response.status_code == 400
+    assert too_long_response.json()["detail"] == "contentIdList cannot contain more unique items than the generated course length"
 
 
 def test_companion_count_zero_is_accepted(monkeypatch, backend_payload) -> None:

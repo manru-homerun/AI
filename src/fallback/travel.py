@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.core.config import BACKEND_RECOMMENDATION_TOP_K
+from src.core.config import BACKEND_RECOMMENDATION_TOP_K, COURSE_POIS_PER_DAY
 
 
 FALLBACK_CONTENT_IDS_BY_AREA = {
@@ -174,14 +174,14 @@ def build_fallback_course_payload(
     trip_days: int,
     forced_content_ids: list[str] | None = None,
 ) -> tuple[list[str], list[dict[str, Any]]]:
-    desired_poi_count = max(int(trip_days), 1) * 3
+    desired_poi_count = max(int(trip_days), 1) * COURSE_POIS_PER_DAY
     forced_content_ids = validate_forced_content_ids_fit(forced_content_ids or [], desired_poi_count)
     content_ids = build_area_limited_course_ids(area_code, desired_poi_count, forced_content_ids)
     steps = [
         {
             "rank": index + 1,
-            "day_index": index // 3 + 1,
-            "slot_index": index % 3 + 1,
+            "day_index": index // COURSE_POIS_PER_DAY + 1,
+            "slot_index": index % COURSE_POIS_PER_DAY + 1,
             "content_id": content_id,
             "token_id": index + 3,
             "score": 1.0 - (index * 0.01),

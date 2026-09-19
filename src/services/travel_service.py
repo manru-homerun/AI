@@ -5,7 +5,7 @@ from typing import Any, Mapping, Optional
 
 from fastapi import HTTPException
 
-from src.core.config import SETTINGS, Settings
+from src.core.config import COURSE_POIS_PER_DAY, SETTINGS, Settings
 from src.core.logging import get_logger
 from src.fallback.travel import (
     build_fallback_course_payload,
@@ -218,7 +218,7 @@ class TravelService:
     def generate_travel_course(self, request: TravelGenerateRequest) -> GenerateCourseResponse:
         try:
             user_features, trip_days = travel_generate_request_to_user_features(request)
-            desired_poi_count = trip_days * 3
+            desired_poi_count = trip_days * COURSE_POIS_PER_DAY
             forced_content_ids = validate_forced_content_ids_fit(request.contentIdList, desired_poi_count)
             if runtime_state.COURSE_RUNTIME is None:
                 log_extra = {
@@ -248,7 +248,10 @@ class TravelService:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except Exception:
             trip_days = parse_int_choice("travelDuration", request.travelDuration, {1, 2, 3})
-            forced_content_ids = validate_forced_content_ids_fit(request.contentIdList, trip_days * 3)
+            forced_content_ids = validate_forced_content_ids_fit(
+                request.contentIdList,
+                trip_days * COURSE_POIS_PER_DAY,
+            )
             log_extra = {
                 "event": "course_inference_failure",
                 **_log_context(

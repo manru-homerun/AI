@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_TINY_GRU_ARTIFACT_DIR = ROOT / "artifacts" / "tiny_gru_onnx_experiment"
 DEFAULT_COURSE_DECODER_ARTIFACT_DIR = ROOT / "artifacts" / "conditional_gru_decoder_experiment"
 BACKEND_RECOMMENDATION_TOP_K = 4
+COURSE_POIS_PER_DAY = 6
 
 
 @dataclass(frozen=True)
