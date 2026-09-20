@@ -25,6 +25,7 @@ from src.schemas.travel import (
     TravelGenerateRequest,
     TravelSpotSuggestionsRequest,
 )
+from src.services.accessibility import filter_recommendations_by_accessibility, requested_accessibility_features
 
 
 logger = get_logger(__name__)
@@ -146,9 +147,24 @@ def fallback_course_response(
     return _course_response_from_payload(content_ids, steps)
 
 
-def fallback_recommend_response(area_code: str, content_id_sequence: list[str]) -> RecommendResponse:
-    items = build_fallback_recommendation_payload(area_code, content_id_sequence)
-    return RecommendResponse(recommendations=[RecommendItem(**item) for item in items])
+def fallback_recommend_response(
+    area_code: str,
+    content_id_sequence: list[str],
+    top_k: int = SETTINGS.backend_recommendation_top_k,
+    required_accessibility_features: set[str] | None = None,
+    log_extra: Mapping[str, Any] | None = None,
+) -> RecommendResponse:
+    candidate_k = max(top_k, SETTINGS.backend_recommendation_candidate_k)
+    items = build_fallback_recommendation_payload(area_code, content_id_sequence, candidate_k)
+    recommendations = [RecommendItem(**item) for item in items]
+    if required_accessibility_features:
+        recommendations = filter_recommendations_by_accessibility(
+            recommendations,
+            required_accessibility_features,
+            log_extra=log_extra,
+            logger=logger,
+        )
+    return RecommendResponse(recommendations=recommendations[:top_k])
 
 
 def central_tourism_recommend_response(
@@ -156,16 +172,31 @@ def central_tourism_recommend_response(
     content_id_sequence: list[str],
     top_k: int,
     log_extra: Mapping[str, Any],
+    required_accessibility_features: set[str] | None = None,
 ) -> RecommendResponse:
+    candidate_k = max(top_k, SETTINGS.backend_recommendation_candidate_k)
     try:
-        items = build_central_tourism_recommendation_payload(area_code, top_k)
+        items = build_central_tourism_recommendation_payload(area_code, candidate_k)
     except Exception:
         logger.exception(
             "central tourism fallback failed; using static recommendation response",
             extra={**log_extra, "event": "recommend_central_tourism_fallback_failure"},
         )
-        return fallback_recommend_response_or_500(area_code, content_id_sequence, log_extra)
-    return RecommendResponse(recommendations=[RecommendItem(**item) for item in items])
+        return fallback_recommend_response_or_500(
+            area_code,
+            content_id_sequence,
+            log_extra,
+            required_accessibility_features,
+        )
+    recommendations = [RecommendItem(**item) for item in items]
+    if required_accessibility_features:
+        recommendations = filter_recommendations_by_accessibility(
+            recommendations,
+            required_accessibility_features,
+            log_extra=log_extra,
+            logger=logger,
+        )
+    return RecommendResponse(recommendations=recommendations[:top_k])
 
 
 def fallback_course_response_or_500(
@@ -184,9 +215,16 @@ def fallback_recommend_response_or_500(
     area_code: str,
     content_id_sequence: list[str],
     log_extra: Mapping[str, Any] | None = None,
+    required_accessibility_features: set[str] | None = None,
 ) -> RecommendResponse:
     try:
-        return fallback_recommend_response(area_code, content_id_sequence)
+        return fallback_recommend_response(
+            area_code,
+            content_id_sequence,
+            SETTINGS.backend_recommendation_top_k,
+            required_accessibility_features,
+            log_extra,
+        )
     except Exception as exc:
         _raise_fallback_error("recommend", exc, log_extra)
 
@@ -308,6 +346,11 @@ class TravelService:
     def recommend_for_backend(self, request: TravelSpotSuggestionsRequest) -> RecommendResponse:
         user_features, trip_days = travel_generate_request_to_user_features(request)
         desired_poi_count = trip_days * COURSE_POIS_PER_DAY
+        required_features = requested_accessibility_features(
+            has_disabled=bool(request.hasDisabled),
+            has_elderly=bool(request.hasElderly),
+            has_child=bool(request.hasChild),
+        )
         if not request.contentIdSequence:
             log_extra = {
                 "event": "recommend_fallback",
@@ -328,6 +371,7 @@ class TravelService:
                 [],
                 self.settings.backend_recommendation_top_k,
                 log_extra,
+                required_features,
             )
         if len(request.contentIdSequence) == desired_poi_count:
             log_extra = {
@@ -349,6 +393,7 @@ class TravelService:
                 request.contentIdSequence,
                 self.settings.backend_recommendation_top_k,
                 log_extra,
+                required_features,
             )
         if runtime_state.RUNTIME is None:
             log_extra = {
@@ -366,7 +411,12 @@ class TravelService:
                 "fallback_reason=model_unavailable",
                 extra=log_extra,
             )
-            return fallback_recommend_response_or_500(request.areaCode, request.contentIdSequence, log_extra)
+            return fallback_recommend_response_or_500(
+                request.areaCode,
+                request.contentIdSequence,
+                log_extra,
+                required_features,
+            )
 
         try:
             allowed_content_ids = set(fallback_content_ids_for_area(request.areaCode))
@@ -375,9 +425,32 @@ class TravelService:
                 content_id_sequence=request.contentIdSequence,
                 user_features=user_features,
                 allowed_content_ids=allowed_content_ids,
-                top_k=self.settings.backend_recommendation_top_k,
+                top_k=self.settings.backend_recommendation_candidate_k,
             )
-            if len(recommendations) == self.settings.backend_recommendation_top_k:
+            seen = {str(content_id) for content_id in request.contentIdSequence}
+            if len(recommendations) < self.settings.backend_recommendation_candidate_k:
+                recommendations = complete_area_limited_recommendations(
+                    request.areaCode,
+                    seen,
+                    recommendations,
+                    self.settings.backend_recommendation_candidate_k,
+                ).recommendations
+            if required_features:
+                recommendations = filter_recommendations_by_accessibility(
+                    recommendations,
+                    required_features,
+                    log_extra={
+                        "event": "recommend_accessibility_filter",
+                        **_log_context(
+                            endpoint="/recommend",
+                            area_code=request.areaCode,
+                            trip_days=trip_days,
+                            runtime="tiny_gru",
+                        ),
+                    },
+                    logger=logger,
+                )
+            if len(recommendations) >= self.settings.backend_recommendation_top_k:
                 logger.info(
                     "recommendation inference succeeded",
                     extra={
@@ -390,14 +463,10 @@ class TravelService:
                         ),
                     },
                 )
-                return RecommendResponse(recommendations=recommendations)
-            seen = {str(content_id) for content_id in request.contentIdSequence}
-            response = complete_area_limited_recommendations(
-                request.areaCode,
-                seen,
-                recommendations,
-                self.settings.backend_recommendation_top_k,
-            )
+                return RecommendResponse(
+                    recommendations=recommendations[: self.settings.backend_recommendation_top_k]
+                )
+            response = RecommendResponse(recommendations=recommendations[: self.settings.backend_recommendation_top_k])
             logger.info(
                 "recommendation inference succeeded",
                 extra={
@@ -427,4 +496,9 @@ class TravelService:
                 "fallback_reason=inference_error",
                 extra=log_extra,
             )
-            return fallback_recommend_response_or_500(request.areaCode, request.contentIdSequence, log_extra)
+            return fallback_recommend_response_or_500(
+                request.areaCode,
+                request.contentIdSequence,
+                log_extra,
+                required_features,
+            )
