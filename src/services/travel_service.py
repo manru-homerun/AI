@@ -199,6 +199,23 @@ def central_tourism_recommend_response(
     return RecommendResponse(recommendations=recommendations[:top_k])
 
 
+def central_tourism_recommend_response(
+    area_code: str,
+    content_id_sequence: list[str],
+    top_k: int,
+    log_extra: Mapping[str, Any],
+) -> RecommendResponse:
+    try:
+        items = build_central_tourism_recommendation_payload(area_code, top_k)
+    except Exception:
+        logger.exception(
+            "central tourism fallback failed; using static recommendation response",
+            extra={**log_extra, "event": "recommend_central_tourism_fallback_failure"},
+        )
+        return fallback_recommend_response_or_500(area_code, content_id_sequence, log_extra)
+    return RecommendResponse(recommendations=[RecommendItem(**item) for item in items])
+
+
 def fallback_course_response_or_500(
     area_code: str,
     trip_days: int,
