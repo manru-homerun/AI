@@ -16,6 +16,11 @@ jobs:
     env:
       EC2_APP_DIR: ${{ secrets.EC2_APP_DIR || '/opt/travel-ai' }}
       HEALTHCHECK_URL: https://${{ secrets.EC2_HOST }}/ready
+      SHARED_GRU_ARTIFACT_DIR: /app/artifacts/shared_next_poi_gru_experiment/shared-next-poi-gru-v1
+      LOG_LEVEL: INFO
+      SERVICE_NAME: travel-ai
+      CENTRAL_TOURISM_BASE_YM: "202504"
+      CENTRAL_TOURISM_API_URL: https://apis.data.go.kr/B551011/LocgoHubTarService1/areaBasedList1
 
     steps:
       - name: Checkout
@@ -58,10 +63,15 @@ jobs:
           REMOTE_EC2_APP_DIR: ${{ env.EC2_APP_DIR }}
           REMOTE_GITHUB_SHA: ${{ github.sha }}
           REMOTE_HEALTHCHECK_URL: ${{ env.HEALTHCHECK_URL }}
+          REMOTE_SHARED_GRU_ARTIFACT_DIR: ${{ env.SHARED_GRU_ARTIFACT_DIR }}
+          REMOTE_LOG_LEVEL: ${{ env.LOG_LEVEL }}
+          REMOTE_SERVICE_NAME: ${{ env.SERVICE_NAME }}
+          REMOTE_CENTRAL_TOURISM_BASE_YM: ${{ env.CENTRAL_TOURISM_BASE_YM }}
+          REMOTE_CENTRAL_TOURISM_API_URL: ${{ env.CENTRAL_TOURISM_API_URL }}
           REMOTE_DATA_OPENAPI_KEY: ${{ secrets.DATA_OPENAPI_KEY }}
         run: |
           ssh -i ~/.ssh/deploy_key "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" \
-            "EC2_APP_DIR='${REMOTE_EC2_APP_DIR}' GITHUB_SHA='${REMOTE_GITHUB_SHA}' HEALTHCHECK_URL='${REMOTE_HEALTHCHECK_URL}' DATA_OPENAPI_KEY='${REMOTE_DATA_OPENAPI_KEY}' bash -s" <<'EOF'
+            "EC2_APP_DIR='${REMOTE_EC2_APP_DIR}' GITHUB_SHA='${REMOTE_GITHUB_SHA}' HEALTHCHECK_URL='${REMOTE_HEALTHCHECK_URL}' SHARED_GRU_ARTIFACT_DIR='${REMOTE_SHARED_GRU_ARTIFACT_DIR}' LOG_LEVEL='${REMOTE_LOG_LEVEL}' SERVICE_NAME='${REMOTE_SERVICE_NAME}' CENTRAL_TOURISM_BASE_YM='${REMOTE_CENTRAL_TOURISM_BASE_YM}' CENTRAL_TOURISM_API_URL='${REMOTE_CENTRAL_TOURISM_API_URL}' DATA_OPENAPI_KEY='${REMOTE_DATA_OPENAPI_KEY}' bash -s" <<'EOF'
           set -euo pipefail
 
           APP_DIR="${EC2_APP_DIR}"
