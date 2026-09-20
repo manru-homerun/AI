@@ -197,21 +197,12 @@ def central_tourism_content_id(item: dict[str, Any]) -> str | None:
     for key in (
         "contentid",
         "contentId",
-        "hubTatsCd",
-        "rlteTatsId",
-        "rlteTatsNo",
-        "hubTatsId",
-        "hubTatsNo",
-        "baseYmd",
-        "title",
-        "rlteTatsNm",
-        "hubTatsNm",
     ):
         value = item.get(key)
         if value is None:
             continue
         normalized = str(value).strip()
-        if normalized:
+        if normalized and normalized.isdigit():
             return normalized
     return None
 

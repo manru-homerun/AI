@@ -4,6 +4,5 @@
 models/
 data/processed/*
 data/raw/*
-src/west/
 *.pyc
 Agents.md

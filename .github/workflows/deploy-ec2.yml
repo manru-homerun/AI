@@ -58,9 +58,10 @@ jobs:
           REMOTE_EC2_APP_DIR: ${{ env.EC2_APP_DIR }}
           REMOTE_GITHUB_SHA: ${{ github.sha }}
           REMOTE_HEALTHCHECK_URL: ${{ env.HEALTHCHECK_URL }}
+          REMOTE_DATA_OPENAPI_KEY: ${{ secrets.DATA_OPENAPI_KEY }}
         run: |
           ssh -i ~/.ssh/deploy_key "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" \
-            "EC2_APP_DIR='${REMOTE_EC2_APP_DIR}' GITHUB_SHA='${REMOTE_GITHUB_SHA}' HEALTHCHECK_URL='${REMOTE_HEALTHCHECK_URL}' bash -s" <<'EOF'
+            "EC2_APP_DIR='${REMOTE_EC2_APP_DIR}' GITHUB_SHA='${REMOTE_GITHUB_SHA}' HEALTHCHECK_URL='${REMOTE_HEALTHCHECK_URL}' DATA_OPENAPI_KEY='${REMOTE_DATA_OPENAPI_KEY}' bash -s" <<'EOF'
           set -euo pipefail
 
           APP_DIR="${EC2_APP_DIR}"

@@ -13,6 +13,7 @@ services:
     environment:
       TINY_GRU_ARTIFACT_DIR: /app/artifacts/tiny_gru_onnx_experiment
       COURSE_DECODER_ARTIFACT_DIR: /app/artifacts/conditional_gru_decoder_experiment
+      DATA_OPENAPI_KEY: ${DATA_OPENAPI_KEY}
     networks:
       - travel-ai
     logging:

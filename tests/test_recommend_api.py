@@ -16,6 +16,7 @@ from src.fallback.travel import (
 )
 from src.inference import runtime as runtime_state
 from src.services import travel_service
+from src.services import accessibility
 
 
 CENTRAL_TOURISM_RECOMMENDATIONS = [
@@ -30,7 +31,7 @@ def test_central_tourism_api_url_uses_current_locgo_service() -> None:
     assert CENTRAL_TOURISM_API_URL == "https://apis.data.go.kr/B551011/LocgoHubTarService1/areaBasedList1"
 
 
-def test_central_tourism_uses_manual_area_params_and_hub_tats_code(monkeypatch) -> None:
+def test_central_tourism_uses_manual_area_params_and_tourapi_content_id(monkeypatch) -> None:
     assert CENTRAL_TOURISM_BASE_YM == "202504"
     assert TOURAPI_AREA_PARAMS_BY_BACKEND_AREA == {
         "11000": {"areaCd": "11", "signguCd": "11710"},
@@ -46,14 +47,27 @@ def test_central_tourism_uses_manual_area_params_and_hub_tats_code(monkeypatch) 
     monkeypatch.setattr(
         "src.fallback.travel.fetch_central_tourism_items",
         lambda area_code, top_k: [
-            {"hubTatsCd": f"hub-{index}", "hubTatsNm": f"spot-{index}"}
+            {"contentid": f"{1000 + index}", "hubTatsCd": f"hub-{index}", "hubTatsNm": f"spot-{index}"}
             for index in range(1, top_k + 1)
         ],
     )
 
     recommendations = build_central_tourism_recommendation_payload("11000", 4)
 
-    assert [item["content_id"] for item in recommendations] == ["hub-1", "hub-2", "hub-3", "hub-4"]
+    assert [item["content_id"] for item in recommendations] == ["1001", "1002", "1003", "1004"]
+
+
+def test_central_tourism_rejects_hub_tats_code_as_content_id(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "src.fallback.travel.fetch_central_tourism_items",
+        lambda area_code, top_k: [
+            {"hubTatsCd": f"hub-{index}", "hubTatsNm": f"spot-{index}"}
+            for index in range(1, top_k + 1)
+        ],
+    )
+
+    with pytest.raises(RuntimeError, match="too few items"):
+        build_central_tourism_recommendation_payload("11000", 4)
 
 
 def test_suggest_travel_spots_returns_four_fallback_items(monkeypatch, backend_payload) -> None:
@@ -240,6 +254,170 @@ def test_suggest_travel_spots_runtime_filters_to_area(monkeypatch, backend_paylo
     assert len(recommended_ids) == 4
     assert set(recommended_ids).issubset(seoul_ids)
     assert set(recommended_ids).isdisjoint(payload["contentIdSequence"])
+
+
+def test_barrierfree_detail_api_uses_content_id_params(monkeypatch) -> None:
+    captured_url = ""
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return None
+
+        def read(self):
+            return (
+                b'{"response":{"header":{"resultCode":"0000"},'
+                b'"body":{"items":{"item":[{"wheelchair":"ok"}]}}}}'
+            )
+
+    def fake_urlopen(url, timeout):
+        nonlocal captured_url
+        captured_url = url
+        assert timeout == accessibility.BARRIERFREE_TIMEOUT_SECONDS
+        return FakeResponse()
+
+    monkeypatch.setattr(accessibility, "urlopen", fake_urlopen)
+
+    items = accessibility.fetch_barrierfree_detail_items("12345", service_key="plain-key")
+
+    assert items == [{"wheelchair": "ok"}]
+    assert accessibility.BARRIERFREE_DETAIL_BASE_URL in captured_url
+    assert "contentId=12345" in captured_url
+    assert "MobileOS=ETC" in captured_url
+    assert "MobileApp=kor_travel_recommendation" in captured_url
+    assert "numOfRows=10" in captured_url
+
+
+def test_accessibility_feature_detection_requires_requested_features() -> None:
+    items = [
+        {
+            "parking": "장애인 주차장 있음",
+            "exit": "출입구까지 경사로 설치",
+            "babysparechair": "유모차 대여 가능",
+        }
+    ]
+
+    features = accessibility.accessibility_features_from_items(items)
+
+    assert {"disabled", "elderly", "child"}.issubset(features)
+
+
+def test_accessibility_feature_detection_uses_barrierfree_field_names() -> None:
+    items = [
+        {
+            "wheelchair": "대여 가능",
+            "elevator": "승강기 이용 가능",
+            "parking": "장애인 주차장 있음",
+            "route": "출입구까지 경사로 설치",
+            "stroller": "대여 가능",
+            "helpdog": "없음",
+        }
+    ]
+
+    features = accessibility.accessibility_features_from_items(items)
+
+    assert "disabled" in features
+    assert "elderly" in features
+    assert "child" in features
+
+
+def test_suggest_travel_spots_skips_accessibility_filter_when_flags_are_false(
+    monkeypatch, backend_payload
+) -> None:
+    seoul_ids = AREA_FALLBACK_IDS["11000"]
+    content_id_to_token = {content_id: index for index, content_id in enumerate(seoul_ids)}
+    content_id_to_token["<UNK>"] = len(content_id_to_token)
+    monkeypatch.setattr(
+        runtime_state,
+        "RUNTIME",
+        {
+            "session": DummyRecommendSession(np.arange(len(content_id_to_token), 0, -1, dtype=np.float32)),
+            "feature_encoder": DummyFeatureEncoder(),
+            "content_id_to_token": content_id_to_token,
+            "token_to_content_id": {index: content_id for content_id, index in content_id_to_token.items()},
+            "unk_token": "<UNK>",
+            "max_sequence_len": 8,
+        },
+    )
+
+    def fail_if_called(_content_id):
+        raise AssertionError("accessibility API should not be called")
+
+    monkeypatch.setattr(accessibility, "fetch_barrierfree_detail_items", fail_if_called)
+    client = TestClient(tiny_gru_app.app)
+    payload = {**backend_payload, "contentIdSequence": seoul_ids[:2]}
+    payload.pop("contentIdList")
+
+    response = client.post("/recommend", json=payload)
+
+    assert response.status_code == 200
+    recommended_ids = [item["content_id"] for item in response.json()["recommendations"]]
+    assert recommended_ids == seoul_ids[2:6]
+
+
+def test_suggest_travel_spots_filters_candidate_pool_by_disabled_accessibility(
+    monkeypatch, backend_payload
+) -> None:
+    seoul_ids = AREA_FALLBACK_IDS["11000"]
+    content_id_to_token = {content_id: index for index, content_id in enumerate(seoul_ids)}
+    content_id_to_token["<UNK>"] = len(content_id_to_token)
+    monkeypatch.setattr(
+        runtime_state,
+        "RUNTIME",
+        {
+            "session": DummyRecommendSession(np.arange(len(content_id_to_token), 0, -1, dtype=np.float32)),
+            "feature_encoder": DummyFeatureEncoder(),
+            "content_id_to_token": content_id_to_token,
+            "token_to_content_id": {index: content_id for content_id, index in content_id_to_token.items()},
+            "unk_token": "<UNK>",
+            "max_sequence_len": 8,
+        },
+    )
+    accessible_ids = {seoul_ids[2], seoul_ids[4]}
+    called_ids: list[str] = []
+
+    def fake_fetch(content_id):
+        called_ids.append(content_id)
+        if content_id in accessible_ids:
+            return [{"wheelchair": "휠체어 접근 가능, 장애인 화장실 있음"}]
+        return [{"contentid": content_id}]
+
+    monkeypatch.setattr(accessibility, "fetch_barrierfree_detail_items", fake_fetch)
+    client = TestClient(tiny_gru_app.app)
+    payload = {
+        **backend_payload,
+        "contentIdSequence": seoul_ids[:2],
+        "hasDisabled": True,
+    }
+    payload.pop("contentIdList")
+
+    response = client.post("/recommend", json=payload)
+
+    assert response.status_code == 200
+    recommended_ids = [item["content_id"] for item in response.json()["recommendations"]]
+    assert recommended_ids == [seoul_ids[2], seoul_ids[4]]
+    assert called_ids == seoul_ids[2:] + seoul_ids[:2]
+
+
+def test_suggest_travel_spots_returns_empty_when_no_accessibility_candidates(
+    monkeypatch, backend_payload
+) -> None:
+    monkeypatch.setattr(runtime_state, "RUNTIME", None)
+    monkeypatch.setattr(accessibility, "fetch_barrierfree_detail_items", lambda _content_id: [])
+    client = TestClient(tiny_gru_app.app)
+    payload = {
+        **backend_payload,
+        "contentIdSequence": AREA_FALLBACK_IDS["11000"][:2],
+        "hasDisabled": True,
+    }
+    payload.pop("contentIdList")
+
+    response = client.post("/recommend", json=payload)
+
+    assert response.status_code == 200
+    assert response.json()["recommendations"] == []
 
 
 def test_suggest_travel_spots_rejects_invalid_travel_duration(monkeypatch, backend_payload) -> None:
