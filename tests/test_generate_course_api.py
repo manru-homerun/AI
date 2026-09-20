@@ -23,7 +23,9 @@ class DummyCourseRuntime:
     ):
         desired = int(desired_poi_count or trip_days * COURSE_POIS_PER_DAY)
         forced = list(forced_content_ids or [])
-        allowed = [content_id for content_id in allowed_content_ids or [] if content_id not in forced]
+        area_code = str(user_features.get("area_code", "11000"))
+        candidate_ids = allowed_content_ids or AREA_FALLBACK_IDS[area_code]
+        allowed = [content_id for content_id in candidate_ids if content_id not in forced]
         content_ids = [*forced, *allowed[: desired - len(forced)]]
         steps = [
             tiny_gru_app.GenerateCourseStep(
@@ -45,7 +47,7 @@ class FailingCourseRuntime:
 
 
 def test_generate_travel_returns_fallback_with_content_id_list_prefix(monkeypatch, backend_payload) -> None:
-    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", None)
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
     client = TestClient(tiny_gru_app.app)
 
     response = client.post("/generate-course", json=backend_payload)
@@ -64,7 +66,7 @@ def test_generate_travel_returns_fallback_with_content_id_list_prefix(monkeypatc
 
 
 def test_generate_travel_logs_model_unavailable_fallback(monkeypatch, caplog, backend_payload) -> None:
-    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", None)
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
     caplog.set_level(logging.WARNING)
     client = TestClient(tiny_gru_app.app)
 
@@ -76,12 +78,12 @@ def test_generate_travel_logs_model_unavailable_fallback(monkeypatch, caplog, ba
     assert record.endpoint == "/generate-course"
     assert record.area_code == backend_payload["areaCode"]
     assert record.trip_days == 2
-    assert record.runtime == "course_decoder"
+    assert record.runtime == "shared_next_poi_gru"
     assert record.fallback_reason == "model_unavailable"
 
 
 def test_generate_travel_logs_inference_error_fallback(monkeypatch, caplog, backend_payload) -> None:
-    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", FailingCourseRuntime())
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", FailingCourseRuntime())
     caplog.set_level(logging.ERROR)
     client = TestClient(tiny_gru_app.app)
 
@@ -93,12 +95,12 @@ def test_generate_travel_logs_inference_error_fallback(monkeypatch, caplog, back
     assert record.endpoint == "/generate-course"
     assert record.area_code == backend_payload["areaCode"]
     assert record.trip_days == 2
-    assert record.runtime == "course_decoder"
+    assert record.runtime == "shared_next_poi_gru"
     assert record.fallback_reason == "inference_error"
 
 
 def test_generate_travel_fallback_uses_area_specific_content_ids(monkeypatch, backend_payload) -> None:
-    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", None)
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
     client = TestClient(tiny_gru_app.app)
 
     for area_code, area_content_ids in AREA_FALLBACK_IDS.items():
@@ -117,7 +119,7 @@ def test_generate_travel_fallback_uses_area_specific_content_ids(monkeypatch, ba
 
 
 def test_generate_travel_runtime_uses_area_specific_content_ids(monkeypatch, backend_payload) -> None:
-    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", DummyCourseRuntime())
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", DummyCourseRuntime())
     client = TestClient(tiny_gru_app.app)
 
     response = client.post("/generate-course", json=backend_payload)
@@ -154,7 +156,7 @@ def test_content_id_list_validation(backend_payload) -> None:
 
 
 def test_companion_count_zero_is_accepted(monkeypatch, backend_payload) -> None:
-    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", None)
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
     client = TestClient(tiny_gru_app.app)
 
     response = client.post("/generate-course", json={**backend_payload, "companionCount": 0})
@@ -178,7 +180,7 @@ def test_preferred_area_requires_one_to_three_five_digit_strings(backend_payload
 
 
 def test_gender_must_use_backend_korean_values(monkeypatch, backend_payload) -> None:
-    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", None)
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
     client = TestClient(tiny_gru_app.app)
 
     male_response = client.post("/generate-course", json={**backend_payload, "gender": "남"})
@@ -215,8 +217,10 @@ def test_area_code_must_be_supported(backend_payload) -> None:
 
 
 def test_health_and_ready_report_degraded_with_503_when_runtimes_are_missing(monkeypatch) -> None:
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
     monkeypatch.setattr(runtime_state, "RUNTIME", None)
     monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", None)
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME_ERROR", "sensitive /tmp/shared failure")
     monkeypatch.setattr(runtime_state, "RUNTIME_ERROR", "sensitive /tmp/model failure")
     monkeypatch.setattr(runtime_state, "COURSE_RUNTIME_ERROR", "sensitive /tmp/course failure")
     client = TestClient(tiny_gru_app.app)
@@ -228,6 +232,7 @@ def test_health_and_ready_report_degraded_with_503_when_runtimes_are_missing(mon
         body = response.json()
         assert body == {
             "status": "degraded",
+            "shared_gru_loaded": False,
             "tiny_gru_loaded": False,
             "course_decoder_loaded": False,
         }
@@ -236,7 +241,8 @@ def test_health_and_ready_report_degraded_with_503_when_runtimes_are_missing(mon
 
 
 def test_health_and_ready_report_ok_when_runtimes_are_loaded(monkeypatch) -> None:
-    monkeypatch.setattr(runtime_state, "RUNTIME", {"session": object()})
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", DummyCourseRuntime())
+    monkeypatch.setattr(runtime_state, "RUNTIME", DummyCourseRuntime())
     monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", DummyCourseRuntime())
     client = TestClient(tiny_gru_app.app)
 
@@ -248,6 +254,7 @@ def test_health_and_ready_report_ok_when_runtimes_are_loaded(monkeypatch) -> Non
 
 
 def test_live_reports_ok_when_runtimes_are_missing(monkeypatch) -> None:
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
     monkeypatch.setattr(runtime_state, "RUNTIME", None)
     monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", None)
     client = TestClient(tiny_gru_app.app)
@@ -259,7 +266,7 @@ def test_live_reports_ok_when_runtimes_are_missing(monkeypatch) -> None:
 
 
 def test_generate_course_internal_does_not_convert_unexpected_errors_to_400(monkeypatch) -> None:
-    monkeypatch.setattr(runtime_state, "COURSE_RUNTIME", FailingCourseRuntime())
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", FailingCourseRuntime())
 
     with pytest.raises(RuntimeError):
         tiny_gru_app.generate_course_internal(

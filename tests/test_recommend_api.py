@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import logging
 
-import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 
-from conftest import AREA_FALLBACK_IDS, DummyFeatureEncoder, DummyRecommendSession
+from conftest import AREA_FALLBACK_IDS, DummySharedRecommendRuntime
 from src.api import tiny_gru_app
 from src.fallback.travel import (
     CENTRAL_TOURISM_BASE_YM,
@@ -71,7 +70,7 @@ def test_central_tourism_rejects_hub_tats_code_as_content_id(monkeypatch) -> Non
 
 
 def test_suggest_travel_spots_returns_four_fallback_items(monkeypatch, backend_payload) -> None:
-    monkeypatch.setattr(runtime_state, "RUNTIME", None)
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
     client = TestClient(tiny_gru_app.app)
     payload = {
         **backend_payload,
@@ -89,7 +88,7 @@ def test_suggest_travel_spots_returns_four_fallback_items(monkeypatch, backend_p
 
 
 def test_suggest_travel_spots_logs_model_unavailable_fallback(monkeypatch, caplog, backend_payload) -> None:
-    monkeypatch.setattr(runtime_state, "RUNTIME", None)
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
     caplog.set_level(logging.WARNING)
     client = TestClient(tiny_gru_app.app)
     payload = {
@@ -106,14 +105,15 @@ def test_suggest_travel_spots_logs_model_unavailable_fallback(monkeypatch, caplo
     assert record.endpoint == "/recommend"
     assert record.area_code == backend_payload["areaCode"]
     assert record.trip_days == 2
-    assert record.runtime == "tiny_gru"
+    assert record.runtime == "shared_next_poi_gru"
     assert record.fallback_reason == "model_unavailable"
 
 
 def test_suggest_travel_spots_empty_sequence_uses_central_tourism_fallback(
     monkeypatch, caplog, backend_payload
 ) -> None:
-    monkeypatch.setattr(runtime_state, "RUNTIME", DummyRecommendSession(np.ones(8, dtype=np.float32)))
+    runtime = DummySharedRecommendRuntime()
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", runtime)
     monkeypatch.setattr(
         travel_service,
         "build_central_tourism_recommendation_payload",
@@ -135,6 +135,7 @@ def test_suggest_travel_spots_empty_sequence_uses_central_tourism_fallback(
     assert response.status_code == 200
     recommended_ids = [item["content_id"] for item in response.json()["recommendations"]]
     assert recommended_ids == ["central-1", "central-2", "central-3", "central-4"]
+    assert runtime.call_count == 0
     record = next(item for item in caplog.records if item.event == "recommend_fallback")
     assert record.fallback_reason == "empty_sequence_central_tourism"
 
@@ -142,7 +143,8 @@ def test_suggest_travel_spots_empty_sequence_uses_central_tourism_fallback(
 def test_suggest_travel_spots_empty_sequence_falls_back_to_static_when_central_tourism_fails(
     monkeypatch, backend_payload
 ) -> None:
-    monkeypatch.setattr(runtime_state, "RUNTIME", DummyRecommendSession(np.ones(8, dtype=np.float32)))
+    runtime = DummySharedRecommendRuntime()
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", runtime)
 
     def fail_central_tourism(*_args, **_kwargs):
         raise RuntimeError("central tourism unavailable")
@@ -160,33 +162,20 @@ def test_suggest_travel_spots_empty_sequence_falls_back_to_static_when_central_t
     assert response.status_code == 200
     recommended_ids = [item["content_id"] for item in response.json()["recommendations"]]
     assert recommended_ids == AREA_FALLBACK_IDS["11000"][:4]
+    assert runtime.call_count == 0
 
 
 def test_suggest_travel_spots_full_course_sequence_uses_central_tourism_fallback(
     monkeypatch, caplog, backend_payload
 ) -> None:
-    monkeypatch.setattr(
-        runtime_state,
-        "RUNTIME",
-        {
-            "session": DummyRecommendSession(np.ones(8, dtype=np.float32)),
-            "feature_encoder": DummyFeatureEncoder(),
-            "content_id_to_token": {"<UNK>": 0},
-            "token_to_content_id": {},
-            "unk_token": "<UNK>",
-            "max_sequence_len": 8,
-        },
-    )
+    runtime = DummySharedRecommendRuntime()
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", runtime)
     monkeypatch.setattr(
         travel_service,
         "build_central_tourism_recommendation_payload",
         lambda area_code, top_k: CENTRAL_TOURISM_RECOMMENDATIONS[:top_k],
     )
 
-    def fail_model_recommendation(*_args, **_kwargs):
-        raise AssertionError("model recommendation should be skipped")
-
-    monkeypatch.setattr(travel_service, "recommend_backend_area_limited", fail_model_recommendation)
     caplog.set_level(logging.INFO)
     client = TestClient(tiny_gru_app.app)
     payload = {**backend_payload, "contentIdSequence": [str(index) for index in range(12)]}
@@ -197,12 +186,13 @@ def test_suggest_travel_spots_full_course_sequence_uses_central_tourism_fallback
     assert response.status_code == 200
     recommended_ids = [item["content_id"] for item in response.json()["recommendations"]]
     assert recommended_ids == ["central-1", "central-2", "central-3", "central-4"]
+    assert runtime.call_count == 0
     record = next(item for item in caplog.records if item.event == "recommend_fallback")
     assert record.fallback_reason == "full_course_sequence"
 
 
 def test_suggest_travel_spots_fallback_uses_area_specific_content_ids(monkeypatch, backend_payload) -> None:
-    monkeypatch.setattr(runtime_state, "RUNTIME", None)
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
     client = TestClient(tiny_gru_app.app)
 
     for area_code, area_content_ids in AREA_FALLBACK_IDS.items():
@@ -223,26 +213,9 @@ def test_suggest_travel_spots_fallback_uses_area_specific_content_ids(monkeypatc
         assert recommended_ids == area_content_ids[2:6]
 
 
-def test_suggest_travel_spots_runtime_filters_to_area(monkeypatch, backend_payload) -> None:
+def test_suggest_travel_spots_uses_shared_runtime_recommendations(monkeypatch, backend_payload) -> None:
     seoul_ids = AREA_FALLBACK_IDS["11000"]
-    busan_ids = AREA_FALLBACK_IDS["26000"]
-    content_ids = [*busan_ids[:4], *seoul_ids[:6]]
-    token_to_content_id = {index: content_id for index, content_id in enumerate(content_ids)}
-    content_id_to_token = {content_id: index for index, content_id in token_to_content_id.items()}
-    content_id_to_token["<UNK>"] = len(content_id_to_token)
-    logits = np.arange(len(content_id_to_token), 0, -1, dtype=np.float32)
-    monkeypatch.setattr(
-        runtime_state,
-        "RUNTIME",
-        {
-            "session": DummyRecommendSession(logits),
-            "feature_encoder": DummyFeatureEncoder(),
-            "content_id_to_token": content_id_to_token,
-            "token_to_content_id": token_to_content_id,
-            "unk_token": "<UNK>",
-            "max_sequence_len": 8,
-        },
-    )
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", DummySharedRecommendRuntime(recommendations=seoul_ids))
     client = TestClient(tiny_gru_app.app)
     payload = {**backend_payload, "contentIdSequence": seoul_ids[:2]}
     payload.pop("contentIdList")
@@ -327,20 +300,7 @@ def test_suggest_travel_spots_skips_accessibility_filter_when_flags_are_false(
     monkeypatch, backend_payload
 ) -> None:
     seoul_ids = AREA_FALLBACK_IDS["11000"]
-    content_id_to_token = {content_id: index for index, content_id in enumerate(seoul_ids)}
-    content_id_to_token["<UNK>"] = len(content_id_to_token)
-    monkeypatch.setattr(
-        runtime_state,
-        "RUNTIME",
-        {
-            "session": DummyRecommendSession(np.arange(len(content_id_to_token), 0, -1, dtype=np.float32)),
-            "feature_encoder": DummyFeatureEncoder(),
-            "content_id_to_token": content_id_to_token,
-            "token_to_content_id": {index: content_id for content_id, index in content_id_to_token.items()},
-            "unk_token": "<UNK>",
-            "max_sequence_len": 8,
-        },
-    )
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", DummySharedRecommendRuntime(recommendations=seoul_ids))
 
     def fail_if_called(_content_id):
         raise AssertionError("accessibility API should not be called")
@@ -361,20 +321,7 @@ def test_suggest_travel_spots_filters_candidate_pool_by_disabled_accessibility(
     monkeypatch, backend_payload
 ) -> None:
     seoul_ids = AREA_FALLBACK_IDS["11000"]
-    content_id_to_token = {content_id: index for index, content_id in enumerate(seoul_ids)}
-    content_id_to_token["<UNK>"] = len(content_id_to_token)
-    monkeypatch.setattr(
-        runtime_state,
-        "RUNTIME",
-        {
-            "session": DummyRecommendSession(np.arange(len(content_id_to_token), 0, -1, dtype=np.float32)),
-            "feature_encoder": DummyFeatureEncoder(),
-            "content_id_to_token": content_id_to_token,
-            "token_to_content_id": {index: content_id for content_id, index in content_id_to_token.items()},
-            "unk_token": "<UNK>",
-            "max_sequence_len": 8,
-        },
-    )
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", DummySharedRecommendRuntime(recommendations=seoul_ids))
     accessible_ids = {seoul_ids[2], seoul_ids[4]}
     called_ids: list[str] = []
 
@@ -404,7 +351,7 @@ def test_suggest_travel_spots_filters_candidate_pool_by_disabled_accessibility(
 def test_suggest_travel_spots_returns_empty_when_no_accessibility_candidates(
     monkeypatch, backend_payload
 ) -> None:
-    monkeypatch.setattr(runtime_state, "RUNTIME", None)
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
     monkeypatch.setattr(accessibility, "fetch_barrierfree_detail_items", lambda _content_id: [])
     client = TestClient(tiny_gru_app.app)
     payload = {
@@ -421,7 +368,7 @@ def test_suggest_travel_spots_returns_empty_when_no_accessibility_candidates(
 
 
 def test_suggest_travel_spots_rejects_invalid_travel_duration(monkeypatch, backend_payload) -> None:
-    monkeypatch.setattr(runtime_state, "RUNTIME", None)
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
     client = TestClient(tiny_gru_app.app)
     payload = {**backend_payload, "travelDuration": "4", "contentIdSequence": AREA_FALLBACK_IDS["11000"][:2]}
     payload.pop("contentIdList")
@@ -433,20 +380,7 @@ def test_suggest_travel_spots_rejects_invalid_travel_duration(monkeypatch, backe
 
 def test_suggest_travel_spots_logs_inference_failure_before_fallback(monkeypatch, caplog, backend_payload) -> None:
     seoul_ids = AREA_FALLBACK_IDS["11000"]
-    content_id_to_token = {content_id: index for index, content_id in enumerate(seoul_ids)}
-    content_id_to_token["<UNK>"] = len(content_id_to_token)
-    monkeypatch.setattr(
-        runtime_state,
-        "RUNTIME",
-        {
-            "session": DummyRecommendSession(np.zeros(len(content_id_to_token), dtype=np.float32)),
-            "feature_encoder": object(),
-            "content_id_to_token": content_id_to_token,
-            "token_to_content_id": {index: content_id for content_id, index in content_id_to_token.items()},
-            "unk_token": "<UNK>",
-            "max_sequence_len": 8,
-        },
-    )
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", DummySharedRecommendRuntime(fail=True))
     client = TestClient(tiny_gru_app.app)
     payload = {**backend_payload, "contentIdSequence": seoul_ids[:2]}
     payload.pop("contentIdList")
@@ -461,17 +395,12 @@ def test_suggest_travel_spots_logs_inference_failure_before_fallback(monkeypatch
     assert record.endpoint == "/recommend"
     assert record.area_code == backend_payload["areaCode"]
     assert record.trip_days == 2
-    assert record.runtime == "tiny_gru"
+    assert record.runtime == "shared_next_poi_gru"
     assert record.fallback_reason == "inference_error"
 
 
 def test_recommend_internal_does_not_convert_unexpected_errors_to_400(monkeypatch) -> None:
-    monkeypatch.setattr(runtime_state, "RUNTIME", {"session": object()})
-
-    def raise_unexpected(*_args, **_kwargs):
-        raise RuntimeError("unexpected recommender failure")
-
-    monkeypatch.setattr(tiny_gru_app, "_recommend_internal", raise_unexpected)
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", DummySharedRecommendRuntime(fail=True))
 
     with pytest.raises(RuntimeError):
         tiny_gru_app.recommend_internal(

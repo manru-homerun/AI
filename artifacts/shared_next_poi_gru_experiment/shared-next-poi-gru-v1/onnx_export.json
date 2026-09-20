@@ -1,0 +1,11 @@
+{
+  "onnx_path": "artifacts\\shared_next_poi_gru_experiment\\shared-next-poi-gru-v1\\model.onnx",
+  "onnx_bytes": 334753,
+  "checkpoint": "best_shared_next_poi_gru.pt",
+  "opset": 17,
+  "torch_onnx_max_abs_diff": 2.86102294921875e-06,
+  "onnx_output_shape": [
+    1,
+    974
+  ]
+}

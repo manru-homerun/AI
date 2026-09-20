@@ -3,8 +3,7 @@ FROM python:3.9-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    TINY_GRU_ARTIFACT_DIR=/app/artifacts/tiny_gru_onnx_experiment \
-    COURSE_DECODER_ARTIFACT_DIR=/app/artifacts/conditional_gru_decoder_experiment
+    SHARED_GRU_ARTIFACT_DIR=/app/artifacts/shared_next_poi_gru_experiment/shared-next-poi-gru-v1
 
 WORKDIR /app
 
@@ -17,8 +16,7 @@ RUN python -m pip install --upgrade pip \
     && python -m pip install -r requirements-production.txt
 
 COPY src ./src
-COPY artifacts/tiny_gru_onnx_experiment ./artifacts/tiny_gru_onnx_experiment
-COPY artifacts/conditional_gru_decoder_experiment ./artifacts/conditional_gru_decoder_experiment
+COPY artifacts/shared_next_poi_gru_experiment ./artifacts/shared_next_poi_gru_experiment
 
 EXPOSE 8000
 

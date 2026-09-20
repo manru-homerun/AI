@@ -22,27 +22,18 @@ Close running Jupyter kernels before syncing, because Windows can lock packages 
 
 ## Common Commands
 
-Run the Tiny GRU experiment:
+Run the shared Next-POI GRU experiment in the notebook, then export the trained checkpoint to ONNX:
+
+```bash
+uv run python -m src.inference.export_shared_next_poi_gru_onnx --artifact-dir artifacts\shared_next_poi_gru_experiment\shared-next-poi-gru-v1
+```
+
+Legacy Tiny GRU and Conditional GRU experiments are kept for comparison only:
 
 ```bash
 uv run python -m src.training.tiny_gru_experiment --artifact-dir artifacts\tiny_gru_onnx_experiment
-```
-
-Export the trained Tiny GRU checkpoint to ONNX:
-
-```bash
 uv run python -m src.inference.export_tiny_gru_onnx --artifact-dir artifacts\tiny_gru_onnx_experiment
-```
-
-Run the Conditional GRU course decoder experiment:
-
-```bash
 uv run python -m src.training.conditional_gru_decoder_experiment --artifact-dir artifacts\conditional_gru_decoder_experiment
-```
-
-Export the Conditional GRU course decoder to ONNX:
-
-```bash
 uv run python -m src.inference.export_conditional_gru_decoder_onnx --artifact-dir artifacts\conditional_gru_decoder_experiment
 ```
 
@@ -58,13 +49,13 @@ Start Jupyter:
 uv run jupyter notebook
 ```
 
-Serve the ONNX model with FastAPI:
+Serve the shared ONNX model with FastAPI:
 
 ```bash
 uv run --no-dev uvicorn src.api.tiny_gru_app:app --host 0.0.0.0 --port 8000
 ```
 
-When `artifacts\conditional_gru_decoder_experiment` contains the exported ONNX files, the same FastAPI app also serves `/generate-course`.
+When `artifacts\shared_next_poi_gru_experiment\shared-next-poi-gru-v1` contains the exported shared ONNX files, the same FastAPI app serves both `/recommend` and `/generate-course`.
 The backend-facing `/generate-course` and `/recommend` endpoints automatically return test data if model artifacts are missing or inference fails.
 
 Generate a travel course with the backend contract body:
@@ -111,9 +102,9 @@ curl -X POST http://127.0.0.1:8000/recommend \
   }'
 ```
 
-`areaCode` must be one of the supported backend region codes: `11000` Seoul, `41110` Suwon, `28000` Incheon, `30000` Daejeon, `27000` Daegu, `12000` Gwangju, `26000` Busan, or `48120` Changwon. Backend-facing responses are constrained to the requested region's fallback/test `contentid` list even when the ONNX runtime is loaded.
+`areaCode` must be one of the supported backend region codes: `11000` Seoul, `41110` Suwon, `28000` Incheon, `30000` Daejeon, `27000` Daegu, `12000` Gwangju, `26000` Busan, or `48120` Changwon. Backend-facing model responses are constrained to the requested region's POI master candidates, with static regional fallback used when the shared runtime is unavailable or inference fails.
 
-`travelPersona` must be an integer from 1 to 7. `preferredArea` must contain one to three 5-digit string codes. `contentIdList` is required for `/generate-course`; its unique values are placed at the front of the generated course, and the remaining POIs are filled from the requested `areaCode` region. `travelerStyle` is expanded to the model's eight-slot style feature. `/generate-course` creates `travelDuration * 6` POIs, up to 6 POIs per day, and `/recommend` always uses top 4 recommendations on the AI server side.
+`travelPersona` must be an integer from 1 to 7. `preferredArea` must contain one to three 5-digit string codes. `contentIdList` is required for `/generate-course` and is treated as a required POI set, not an ordered prefix, when the shared model is available. If course inference fails, the existing regional fallback still places the validated content IDs first and fills the remainder from the requested `areaCode` region. `/generate-course` creates `travelDuration * 6` POIs, up to 6 POIs per day, and `/recommend` always uses top 4 recommendations on the AI server side.
 
 ## EC2 Docker Deployment
 

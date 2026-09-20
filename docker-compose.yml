@@ -11,9 +11,12 @@ services:
     expose:
       - "8000"
     environment:
-      TINY_GRU_ARTIFACT_DIR: /app/artifacts/tiny_gru_onnx_experiment
-      COURSE_DECODER_ARTIFACT_DIR: /app/artifacts/conditional_gru_decoder_experiment
+      SHARED_GRU_ARTIFACT_DIR: ${SHARED_GRU_ARTIFACT_DIR:-/app/artifacts/shared_next_poi_gru_experiment/shared-next-poi-gru-v1}
       DATA_OPENAPI_KEY: ${DATA_OPENAPI_KEY}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SERVICE_NAME: ${SERVICE_NAME:-travel-ai}
+      CENTRAL_TOURISM_BASE_YM: ${CENTRAL_TOURISM_BASE_YM:-202504}
+      CENTRAL_TOURISM_API_URL: ${CENTRAL_TOURISM_API_URL:-https://apis.data.go.kr/B551011/LocgoHubTarService1/areaBasedList1}
     networks:
       - travel-ai
     logging:
