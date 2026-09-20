@@ -16,7 +16,6 @@ from src.fallback.travel import (
     validate_forced_content_ids_fit,
 )
 from src.inference import runtime as runtime_state
-from src.inference.recommender import load_runtime, recommend_internal as _recommend_internal
 from src.schemas.travel import (
     GenerateCourseRequest,
     GenerateCourseResponse,
@@ -39,8 +38,8 @@ from src.services.travel_service import (
 )
 
 
-ARTIFACT_DIR = SETTINGS.tiny_gru_artifact_dir
-COURSE_ARTIFACT_DIR = SETTINGS.course_decoder_artifact_dir
+ARTIFACT_DIR = SETTINGS.shared_gru_artifact_dir
+COURSE_ARTIFACT_DIR = SETTINGS.shared_gru_artifact_dir
 BACKEND_RECOMMENDATION_TOP_K = SETTINGS.backend_recommendation_top_k
 
 
@@ -53,19 +52,27 @@ def health() -> dict[str, Any]:
 
 
 def recommend_internal(request: RecommendRequest) -> RecommendResponse:
-    if runtime_state.RUNTIME is None:
+    if runtime_state.SHARED_RUNTIME is None:
         raise HTTPException(status_code=503, detail="runtime is not loaded")
     try:
-        return _recommend_internal(runtime_state.RUNTIME, request)
+        recommendations = runtime_state.SHARED_RUNTIME.recommend(
+            user_features=request.user_features,
+            area_code=request.user_features.get("area_code", request.user_features.get("areaCode", "")),
+            content_id_sequence=request.content_id_sequence,
+            top_k=request.top_k,
+        )
+        if not recommendations:
+            raise ValueError("content_id_sequence does not contain model-known POIs")
+        return RecommendResponse(recommendations=recommendations)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 def generate_course_internal(request: GenerateCourseRequest) -> GenerateCourseResponse:
-    if runtime_state.COURSE_RUNTIME is None:
-        raise HTTPException(status_code=503, detail="course decoder runtime is not loaded")
+    if runtime_state.SHARED_RUNTIME is None:
+        raise HTTPException(status_code=503, detail="shared GRU runtime is not loaded")
     try:
-        content_ids, steps = runtime_state.COURSE_RUNTIME.generate(
+        content_ids, steps = runtime_state.SHARED_RUNTIME.generate(
             user_features=request.user_features,
             trip_days=request.trip_days,
             desired_poi_count=request.desired_poi_count,
@@ -112,14 +119,14 @@ def complete_area_limited_recommendations(
 
 
 def __getattr__(name: str) -> Any:
-    if name in {"RUNTIME", "COURSE_RUNTIME", "RUNTIME_ERROR", "COURSE_RUNTIME_ERROR"}:
+    if name in {"SHARED_RUNTIME", "RUNTIME", "COURSE_RUNTIME", "SHARED_RUNTIME_ERROR", "RUNTIME_ERROR", "COURSE_RUNTIME_ERROR"}:
         return getattr(runtime_state, name)
     raise AttributeError(name)
 
 
 class _CompatModule(types.ModuleType):
     def __setattr__(self, name: str, value: Any) -> None:
-        if name in {"RUNTIME", "COURSE_RUNTIME", "RUNTIME_ERROR", "COURSE_RUNTIME_ERROR"}:
+        if name in {"SHARED_RUNTIME", "RUNTIME", "COURSE_RUNTIME", "SHARED_RUNTIME_ERROR", "RUNTIME_ERROR", "COURSE_RUNTIME_ERROR"}:
             setattr(runtime_state, name, value)
             return
         super().__setattr__(name, value)

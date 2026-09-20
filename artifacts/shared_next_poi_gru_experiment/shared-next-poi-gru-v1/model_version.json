@@ -1,0 +1,5 @@
+{
+  "model_version": "shared-next-poi-gru-v1",
+  "vocab_version": "full-data-content-vocab-v1",
+  "created_by": "gru_shared_next_poi_masked_experiment.ipynb"
+}

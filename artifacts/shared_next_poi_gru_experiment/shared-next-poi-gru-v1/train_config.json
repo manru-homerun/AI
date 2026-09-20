@@ -1,0 +1,37 @@
+{
+  "model_version": "shared-next-poi-gru-v1",
+  "vocab_version": "full-data-content-vocab-v1",
+  "max_sequence_len": 20,
+  "course_pois_per_day": 6,
+  "pad_token_id": 0,
+  "bos_token_id": 1,
+  "scalar_context_columns": [
+    "companion_count_bucket",
+    "travel_persona",
+    "residence_area_code",
+    "gender",
+    "age_grp",
+    "traveler_style"
+  ],
+  "preferred_area_column": "preferred_area_codes",
+  "missing_context_token": "__MISSING_CONTEXT__",
+  "primary_metric": "masked_mrr@4",
+  "selection_metric": "valid.overall.masked_mrr@4",
+  "report_ks": [
+    1,
+    4,
+    10
+  ],
+  "service_top_k": 4,
+  "model_config": {
+    "embedding_dim": 16,
+    "hidden_dim": 48,
+    "dropout": 0.2,
+    "learning_rate": 0.001,
+    "batch_size": 64,
+    "epochs": 8,
+    "weight_decay": 1e-05
+  },
+  "vocab_size": 974,
+  "user_feature_dim": 58
+}

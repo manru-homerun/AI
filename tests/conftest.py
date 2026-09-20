@@ -44,3 +44,29 @@ class DummyRecommendSession:
 
     def run(self, *_args, **_kwargs):
         return [self.logits.reshape(1, -1)]
+
+
+class DummySharedRecommendRuntime:
+    def __init__(self, recommendations=None, empty: bool = False, fail: bool = False) -> None:
+        self.recommendations = recommendations
+        self.empty = empty
+        self.fail = fail
+        self.call_count = 0
+
+    def recommend(self, *, user_features, area_code, content_id_sequence, top_k):
+        self.call_count += 1
+        if self.fail:
+            raise RuntimeError("shared recommender exploded")
+        if self.empty:
+            return []
+        seen = {str(content_id) for content_id in content_id_sequence}
+        candidate_ids = list(self.recommendations or AREA_FALLBACK_IDS[str(area_code)])
+        candidate_ids = [content_id for content_id in candidate_ids if content_id not in seen]
+        return [
+            tiny_gru_app.RecommendItem(
+                content_id=content_id,
+                token_id=index + 3,
+                score=1.0 - index * 0.05,
+            )
+            for index, content_id in enumerate(candidate_ids[:top_k])
+        ]

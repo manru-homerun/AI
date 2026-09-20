@@ -1,0 +1,973 @@
+﻿content_id,area_code,area_name,content_name,visit_count,token_id,model_version,vocab_version
+1019182,11000,서울,이태원 앤티크 가구거리,1,4,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1021339,11000,서울,서래 마을 이야기,1,5,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1022243,11000,서울,롤링홀,1,6,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1030763,11000,서울,뚝섬한강공원,13,7,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1036894,11000,서울,북악팔각정,1,8,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1059479,11000,서울,여의도 한강공원,23,9,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1059877,11000,서울,양화한강공원,2,10,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1093200,11000,서울,잠실종합운동장 올림픽 주경기장,6,13,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1114020,11000,서울,파리공원,1,15,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1131275,11000,서울,매헌 시민의 숲,2,19,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1177980,11000,서울,국립중앙박물관 어린이 박물관,1,21,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1198901,11000,서울,배재학당 역사박물관,1,22,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1221790,11000,서울,센트럴시티터미널(호남),6,23,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126479,11000,서울,인왕산,1,44,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126480,11000,서울,관악산,1,45,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126481,11000,서울,도봉산,2,46,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126486,11000,서울,도산 근린공원,3,47,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126487,11000,서울,마로니에공원,6,48,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126490,11000,서울,서울어린이대공원,10,49,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126491,11000,서울,장충단공원,1,50,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126492,11000,서울,종묘,3,51,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126498,11000,서울,롯데월드,11,52,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126499,11000,서울,용산가족공원,2,53,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126504,11000,서울,대한불교조계종 봉은사,6,54,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126508,11000,서울,경복궁,28,55,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126509,11000,서울,덕수궁,25,56,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126511,11000,서울,창경궁,5,57,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126512,11000,서울,광화문,2,58,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126514,11000,서울,흥인지문,1,59,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126525,11000,서울,서울 선릉과 정릉,5,60,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126532,11000,서울,올림픽공원,15,61,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126533,11000,서울,청와대 본관,15,62,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126534,11000,서울,미정국수 41 대학로점,4,63,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126535,11000,서울,남산공원 N서울타워,16,64,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126537,11000,서울,북촌 한옥마을,18,65,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126747,11000,서울,남산골 한옥마을,5,68,shared-next-poi-gru-v1,full-data-content-vocab-v1
+127269,11000,서울,청담근린공원,1,76,shared-next-poi-gru-v1,full-data-content-vocab-v1
+127454,11000,서울,운현궁,2,79,shared-next-poi-gru-v1,full-data-content-vocab-v1
+127558,11000,서울,진관사,1,82,shared-next-poi-gru-v1,full-data-content-vocab-v1
+127616,11000,서울,정릉,1,84,shared-next-poi-gru-v1,full-data-content-vocab-v1
+127642,11000,서울,창덕궁,5,86,shared-next-poi-gru-v1,full-data-content-vocab-v1
+127859,11000,서울,한강,1,88,shared-next-poi-gru-v1,full-data-content-vocab-v1
+127955,11000,서울,여의도공원,3,91,shared-next-poi-gru-v1,full-data-content-vocab-v1
+128144,11000,서울,조계사,9,95,shared-next-poi-gru-v1,full-data-content-vocab-v1
+128162,11000,서울,숭례문,7,96,shared-next-poi-gru-v1,full-data-content-vocab-v1
+128553,11000,서울,쌈지길,8,98,shared-next-poi-gru-v1,full-data-content-vocab-v1
+128611,11000,서울,서울숲,19,99,shared-next-poi-gru-v1,full-data-content-vocab-v1
+128776,11000,서울,남산케이블카,2,102,shared-next-poi-gru-v1,full-data-content-vocab-v1
+128866,11000,서울,길상사,2,104,shared-next-poi-gru-v1,full-data-content-vocab-v1
+128968,11000,서울,서울광장,5,106,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129186,11000,서울,덕수궁 돌담길,7,108,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129501,11000,서울,낙산공원,3,113,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129507,11000,서울,청계천,13,114,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129534,11000,서울,탑골공원,2,115,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129703,11000,서울,국립중앙박물관,51,119,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129734,11000,서울,두산아트센터,1,120,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129735,11000,서울,세종문화회관 대극장,8,121,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129747,11000,서울,예술의전당,6,122,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129760,11000,서울,환기미술관,1,123,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129811,11000,서울,국립고궁박물관,5,127,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129852,11000,서울,갤러리 B,1,128,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129854,11000,서울,가나아트센터,1,129,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130070,11000,서울,롯데월드 민속박물관,1,132,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130071,11000,서울,서울시립미술관 서소문 본관,19,133,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130152,11000,서울,서대문형무소 역사관,5,135,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130157,11000,서울,한국 금융사 박물관,1,136,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130178,11000,서울,암사동 선사유적박물관,1,137,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130183,11000,서울,서울 도서관,1,138,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130275,11000,서울,서울대학교병원,1,140,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130284,11000,서울,코엑스 아쿠아리움,5,141,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130289,11000,서울,LG아트센터 서울,2,142,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130303,11000,서울,국립중앙도서관,4,143,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130315,11000,서울,한전아트센터,3,144,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130361,11000,서울,서울역사박물관,3,145,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130403,11000,서울,아르코미술관,1,148,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130431,11000,서울,전쟁기념관,4,150,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1304864,11000,서울,영풍문고 종각 종로본점,1,151,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1304880,11000,서울,승진 완구,1,152,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130525,11000,서울,리움미술관,6,153,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130823,11000,서울,소마미술관,3,161,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130886,11000,서울,롯데월드 샤롯데씨어터,2,162,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130938,11000,서울,광나루안전체험관,2,165,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1310950,11000,서울,청담동 명품거리,1,166,shared-next-poi-gru-v1,full-data-content-vocab-v1
+131297,11000,서울,롯데월드,3,167,shared-next-poi-gru-v1,full-data-content-vocab-v1
+131712,11000,서울,서울월드컵경기장,7,168,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132180,11000,서울,남대문시장,7,173,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132183,11000,서울,광장시장,20,174,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132200,11000,서울,동대문종합시장,4,178,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132201,11000,서울,고속 터미널 지하철역 상가,2,179,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132219,11000,서울,인사동 문화의 거리,10,180,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132226,11000,서울,낙원악기상가,3,181,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132230,11000,서울,서울고속버스터미널(경부),10,182,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132231,11000,서울,세운 전자상가,2,183,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132248,11000,서울,롯데월드 쇼핑몰,4,184,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132492,11000,서울,고투몰,4,188,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132668,11000,서울,롯데면세점 명동 본점,2,194,shared-next-poi-gru-v1,full-data-content-vocab-v1
+133339,11000,서울,우래옥 본점,1,197,shared-next-poi-gru-v1,full-data-content-vocab-v1
+134089,11000,서울,시골막국수,2,199,shared-next-poi-gru-v1,full-data-content-vocab-v1
+134754,11000,서울,남포 면옥,2,200,shared-next-poi-gru-v1,full-data-content-vocab-v1
+135679,11000,서울,남산 산채 집,1,202,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1395270,11000,서울,최순우 옛집,2,204,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1395466,11000,서울,만해 한용운 심우장,3,205,shared-next-poi-gru-v1,full-data-content-vocab-v1
+142725,11000,서울,더 플라자,12,206,shared-next-poi-gru-v1,full-data-content-vocab-v1
+142764,11000,서울,호텔리베라,1,207,shared-next-poi-gru-v1,full-data-content-vocab-v1
+142766,11000,서울,투썸플레이스 롯데월드점,1,208,shared-next-poi-gru-v1,full-data-content-vocab-v1
+143107,11000,서울,비스타 워커힐 서울,2,212,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1439094,11000,서울,블루스퀘어,4,214,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1535690,11000,서울,롯데몰 김포공항점,6,215,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1590323,11000,서울,통인시장,4,216,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1603482,11000,서울,식물,1,217,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1603543,11000,서울,무궁화동산,1,218,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1604580,11000,서울,국립중앙박물관 기획전시실,2,219,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1750737,11000,서울,강동아트센터,2,231,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1849416,11000,서울,대한민국역사박물관,3,237,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1853800,11000,서울,콘래드 서울,1,239,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1866427,11000,서울,서울 시립 북서울 미술관,2,241,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1887839,11000,서울,케르만 레스토랑,1,244,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1906334,11000,서울,동대문디자인플라자(DDP) 동대문 역사 문화공원,4,247,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1912553,11000,서울,조선 김밥,1,249,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1916296,11000,서울,한성백제 박물관,1,250,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1922730,11000,서울,부빙 북촌점,1,252,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1922914,11000,서울,체부동 잔칫집,2,253,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1932502,11000,서울,외양간,1,257,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1934593,11000,서울,국립현대미술관 서울관,18,258,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1964937,11000,서울,서울 둘레길 8코스 북한산-도봉산 코스,1,267,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1968826,11000,서울,순라 길이 비,2,268,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1985729,11000,서울,동방명주 충무로점,1,269,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1985821,11000,서울,파르나스 몰,1,270,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1986171,11000,서울,뜰과 다원,1,271,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2000790,11000,서울,구포국수,2,273,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2003909,11000,서울,롯데월드타워 롯데월드몰,38,274,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2044896,11000,서울,유어 마인드,1,280,shared-next-poi-gru-v1,full-data-content-vocab-v1
+229901,11000,서울,코엑스 A 홀,3,281,shared-next-poi-gru-v1,full-data-content-vocab-v1
+229910,11000,서울,남산골공원,1,282,shared-next-poi-gru-v1,full-data-content-vocab-v1
+231976,11000,서울,목인박물관 목석원,1,285,shared-next-poi-gru-v1,full-data-content-vocab-v1
+232261,11000,서울,버드,1,286,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2381373,11000,서울,서울 시티투어버스,4,289,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2390314,11000,서울,한복남 경복궁점,3,292,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2436503,11000,서울,언더스탠드 에비뉴,1,294,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2470006,11000,서울,동대문디자인플라자,22,303,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2476731,11000,서울,롯데월드 아쿠아리움,4,306,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2492348,11000,서울,서울스카이,3,311,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2495561,11000,서울,서울로 717,7,312,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2499807,11000,서울,망원시장,5,314,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2500229,11000,서울,경의선 숲길공원,2,315,shared-next-poi-gru-v1,full-data-content-vocab-v1
+250147,11000,서울,삼청동 거리,3,316,shared-next-poi-gru-v1,full-data-content-vocab-v1
+250330,11000,서울,중림동 약현성당,1,317,shared-next-poi-gru-v1,full-data-content-vocab-v1
+250469,11000,서울,SETEC,9,321,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2507822,11000,서울,별마다 도서관,4,322,shared-next-poi-gru-v1,full-data-content-vocab-v1
+252532,11000,서울,연세대학교 신촌캠퍼스,1,323,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2545920,11000,서울,국립어린이과학관,3,326,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2553819,11000,서울,경의선 숲길,6,328,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2589349,11000,서울,서울 식물원,5,341,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2591873,11000,서울,고척스카이돔 전면 광장,6,342,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2606150,11000,서울,워터 킹덤 스파 찜질방,1,350,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2606224,11000,서울,공평 도시 유적전시관,1,351,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2608977,11000,서울,국립민속박물관,4,353,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2638475,11000,서울,노들섬 다목적홀 숲,1,363,shared-next-poi-gru-v1,full-data-content-vocab-v1
+264311,11000,서울,천주교 서울 대교구 주교좌 명동 대성당,13,364,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2650046,11000,서울,익선동 한옥거리,7,375,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2650756,11000,서울,망우역사 문화공원,1,377,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2654607,11000,서울,하늘공원,1,379,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2661405,11000,서울,선유도공원,3,381,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2661502,11000,서울,안산 자락길,1,383,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2666751,11000,서울,안녕 인사동,6,391,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2692866,11000,서울,청운 문학도서관,5,404,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2704696,11000,서울,경춘선 숲길,3,406,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2706762,11000,서울,국립항공 박물관,1,407,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2708109,11000,서울,더 현대 서울,24,408,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2711768,11000,서울,현대카드 디자인 라이브러리,3,411,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2721659,11000,서울,태극당,9,416,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2724392,11000,서울,은평 한옥마을,5,418,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2733960,11000,서울,맥심 플랜트,1,420,shared-next-poi-gru-v1,full-data-content-vocab-v1
+273756,11000,서울,두타몰,4,424,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2738571,11000,서울,서울공예 박물관,5,429,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2739454,11000,서울,종로구립 박노수 미술관,3,430,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2739477,11000,서울,윤동주문학관,2,431,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2741499,11000,서울,채그러,1,432,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2741610,11000,서울,천호동 자전거 거리,1,433,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2750941,11000,서울,난지캠핑장,2,440,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2758057,11000,서울,밀파니 베이커리 카페,1,455,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2758150,11000,서울,용산역,109,457,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2758163,11000,서울,청와옥 본점,1,458,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2758179,11000,서울,KSPO 돔,4,459,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2758180,11000,서울,정릉시장,1,460,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2761544,11000,서울,해방,1,464,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2761797,11000,서울,피크닉,1,465,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2762802,11000,서울,한국은행 화폐박물관,1,467,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2762842,11000,서울,피크닉,1,468,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2764323,11000,서울,은평역사한옥 박물관,1,472,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2765202,11000,서울,서소문 성지 역사박물관,2,473,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2765213,11000,서울,동묘벼룩시장,2,474,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2765510,11000,서울,청계광장,1,477,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2773265,11000,서울,K 현대미술관,2,495,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2773297,11000,서울,워커힐호텔,1,496,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2773303,11000,서울,아모레퍼시픽그룹 본사,1,497,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2778428,11000,서울,청진옥,1,502,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2779132,11000,서울,악어 떡볶이,1,505,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2779456,11000,서울,길음 시장,1,507,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2782140,11000,서울,진미 평양냉면,1,516,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2782156,11000,서울,송은,1,517,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2782194,11000,서울,도곡시장,2,518,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2782572,11000,서울,챔프 커피 2작업실,1,519,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2783317,11000,서울,장교숙소 5단지(용산공원 반환부지),4,524,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2783334,11000,서울,더 숲 초소 책방,4,525,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2783512,11000,서울,서울미술관 본관,2,526,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2784016,11000,서울,어스 어스 서촌점,2,528,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2784052,11000,서울,양재 꽃 시장,2,529,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2785797,11000,서울,청계천,6,536,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2787181,11000,서울,윤동주 시인의 언덕,1,540,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2789102,11000,서울,영천시장,2,541,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2798329,11000,서울,남산 둘레길,5,546,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2804988,11000,서울,자코비 버거,1,547,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2805901,11000,서울,페이퍼돌메이트아틀리에,1,548,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2807589,11000,서울,효뜨,2,550,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2808930,11000,서울,훈카츠,1,551,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2809117,11000,서울,런던 베이글 뮤지엄 안국점,1,552,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2811673,11000,서울,도넛 정수,1,553,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2815118,11000,서울,몽탄,1,555,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2815426,11000,서울,566라멘,1,556,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2817111,11000,서울,미도리,1,558,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2823092,11000,서울,페페 그라노,1,562,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2824887,11000,서울,준수방 키친,1,563,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2826636,11000,서울,호호 식당 파미 스테이션 점,1,564,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2828401,11000,서울,소바 연구소,1,567,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2832899,11000,서울,헤이,3,574,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2832942,11000,서울,비스타 워커힐 서울 피자힐,1,575,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2834048,11000,서울,하이커 그라운드,3,576,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2834536,11000,서울,성북동 빵 공장,1,578,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2836148,11000,서울,산모퉁이,1,579,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2836272,11000,서울,코끼리 베이글,4,580,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2837902,11000,서울,돈가스 잔치 동빙고점,1,585,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2838291,11000,서울,옥류한,1,586,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2839397,11000,서울,바이킹스 워프 롯데월드몰점,2,591,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2843520,11000,서울,난포,2,595,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2845326,11000,서울,어글리 베이커리,2,602,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2845610,11000,서울,체 디앤올리,1,603,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2845976,11000,서울,진지아,1,604,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2847752,11000,서울,바다회 사랑 2호점,1,607,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2847996,11000,서울,정돈,1,608,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2848050,11000,서울,아키비스트,1,609,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2849290,11000,서울,달마티안,2,611,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2851166,11000,서울,소설 한 남,1,612,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2852774,11000,서울,히노야 마,1,613,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2853988,11000,서울,샤의 바나 광화문점,1,615,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2855422,11000,서울,호족반 청담,1,616,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2856474,11000,서울,스즈란 테이 이촌점,1,620,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2856652,11000,서울,지우,1,621,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2867252,11000,서울,마일스톤 커피 한남,3,638,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2869902,11000,서울,맛짱 조개,1,647,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2870076,11000,서울,파시 914(넷플릭스 드라마 더 글로리 속 촬영지),1,648,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2871025,11000,서울,테니,1,650,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2871687,11000,서울,뱅뱅 막국수 역삼 본점,1,651,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2892326,11000,서울,콜린,1,657,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2893977,11000,서울,제스티 살룬 성수,2,665,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2893996,11000,서울,롯데월드 어드벤처,1,666,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2894747,11000,서울,단일 서울,1,667,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2894841,11000,서울,오레노카츠 성수 본점,1,668,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2894951,11000,서울,유어 네이키드 치즈,1,669,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2895025,11000,서울,5TO7,1,670,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2895145,11000,서울,할머니의 레시피,1,671,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2895179,11000,서울,록맨,1,672,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2899461,11000,서울,스시 오오 모토,1,675,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2899573,11000,서울,소바 식당 성수점,1,679,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2899951,11000,서울,포셋,1,680,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2900061,11000,서울,롯데월드 아쿠아리움,4,681,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2900115,11000,서울,서울스카이,5,682,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2900388,11000,서울,리틀 포레스트,2,683,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2900390,11000,서울,무대륙,1,684,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2900494,11000,서울,로우키,2,685,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2900554,11000,서울,레이더,1,686,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2900731,11000,서울,유니클로 신사점,1,687,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2900881,11000,서울,옹근 달,1,688,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2900922,11000,서울,카카오 프렌즈 홍대 플래그십스토어,5,689,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2901518,11000,서울,다이소 명동역점,2,691,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2901890,11000,서울,버터 홍대점,2,692,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2902361,11000,서울,이마트 양재점,1,693,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2902549,11000,서울,온 천집 익선,1,694,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2902579,11000,서울,스타필드 코엑스몰,15,695,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2902634,11000,서울,청수랑 갤러리,1,696,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2904906,11000,서울,손기정문화 도서관,2,698,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2905436,11000,서울,뉴발란스 홍대점,1,700,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2905448,11000,서울,아트박스 가로수길점,1,701,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2906228,11000,서울,현대백화점 천호점,1,703,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2906629,11000,서울,올리브영 정릉점,1,705,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2907469,11000,서울,엔터식스 상봉점,1,707,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2907536,11000,서울,행복한 백화점 목동점,2,709,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2908572,11000,서울,롯데백화점 강남점,2,710,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2911307,11000,서울,올리브영 신사점,1,713,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2913997,11000,서울,함흥 본가면옥 건대점,1,718,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2914090,11000,서울,유즈 라멘 만리동점,3,719,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2914179,11000,서울,로이터 커피 셸터,1,720,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2915272,11000,서울,현대백화점 신촌점,1,723,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2918448,11000,서울,현대백화점 무역센터점,3,729,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2923488,11000,서울,창덕궁,2,730,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2925811,11000,서울,서울역,8,734,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2928856,11000,서울,신세계백화점 강남점,5,736,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2929516,11000,서울,아이파크몰 용산점,10,737,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2930410,11000,서울,Apple 가로수길,1,739,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2930839,11000,서울,경리단길,1,743,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2930884,11000,서울,TROUBADOUR 홍대점,1,744,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2931431,11000,서울,신세계백화점 본점,5,748,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2931711,11000,서울,AK플라자 홍대,9,749,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2946075,11000,서울,서울 명예도로 감고 당길,1,754,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2946704,11000,서울,테이스티 버거,1,755,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2979848,11000,서울,롯데백화점 건대 스타시티점,1,756,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2988778,11000,서울,광야 서울,3,757,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2992891,11000,서울,사직단,1,759,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2993183,11000,서울,북촌 전통공예체험관,1,760,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2994062,11000,서울,을지로 골목집,1,762,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2994661,11000,서울,일상 비일상의 틈,5,766,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2994877,11000,서울,송리단길,4,768,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2997938,11000,서울,그랑 핸드 북촌,1,769,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3012705,11000,서울,아트 원 시어터 1관,1,777,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3012777,11000,서울,대학로 자유극장,1,778,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3012809,11000,서울,대원 뮤지엄,2,779,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3013175,11000,서울,어둠 속의 대화,4,780,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3013185,11000,서울,바탕골 소극장,1,781,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3044977,11000,서울,이상의 집,2,787,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3045072,11000,서울,한양도성 유적전시관,1,788,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3056152,11000,서울,열린 송현 녹지 광장,4,790,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3056222,11000,서울,인사 센트럴 뮤지엄,2,792,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3056985,11000,서울,샤로수길,1,793,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3060919,11000,서울,LCDC 서울,3,794,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3060939,11000,서울,사운즈 한 남,1,795,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3060967,11000,서울,서울아트 책 보고,3,796,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3066000,11000,서울,중랑 아트센터,1,800,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3074742,11000,서울,마이아트 뮤지엄,3,803,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3075321,11000,서울,새들러 하우스,3,804,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3076141,11000,서울,KBS 아레나,1,807,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3080058,11000,서울,국회의사당 국회 박물관,1,808,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3080570,11000,서울,성암아트센터,1,813,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3080735,11000,서울,예스24 스테이지,2,814,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3080741,11000,서울,봄날 아트홀,1,815,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3080775,11000,서울,유니플렉스,1,816,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3080929,11000,서울,디오르 성수,5,817,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3081190,11000,서울,팝콘 D 스퀘어,2,818,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3082405,11000,서울,홍대 앞 걷고 싶은 거리,3,819,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3084395,11000,서울,토요코인 호텔 서울 강남점,1,820,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3084400,11000,서울,뚝섬 미술관,3,821,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3085149,11000,서울,롯데콘서트홀,4,823,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3085292,11000,서울,빛의 시어터,4,824,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3085309,11000,서울,밀리언 아카이브,2,825,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3305576,11000,서울,이마트 신촌점,1,829,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3306540,11000,서울,타임스퀘어,6,831,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3306734,11000,서울,신세계백화점 타임스퀘어점,2,832,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3307328,11000,서울,마리오아울렛 3관,1,833,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3335691,11000,서울,최인아 책방,1,837,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3339374,11000,서울,북파크라운지,2,839,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3351700,11000,서울,문화 예술공원,1,841,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3354488,11000,서울,인왕산 둘레길,2,842,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3368708,11000,서울,한지문화산업센터,3,846,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3390048,11000,서울,굽네 플레이타운,1,848,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3400843,11000,서울,용산 어린이 정원(용산공원 반환부지),6,850,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3428325,11000,서울,현대카드 뮤직 라이브러리,2,853,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3433029,11000,서울,어깨동무 스타리움,1,855,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3443017,11000,서울,마르틴 베이커리 아이파크몰점,3,858,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3446770,11000,서울,팝 퍼블 용산 아이파크몰점,4,862,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3447174,11000,서울,롯데몰 은평점,2,863,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3448840,11000,서울,성신여자대학교 돈암 수정캠퍼스,1,864,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3449598,11000,서울,석파정,3,865,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3452906,11000,서울,홍제천 인공폭포,1,867,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3559064,11000,서울,스페이스 원,1,874,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3570323,11000,서울,부베트,1,875,shared-next-poi-gru-v1,full-data-content-vocab-v1
+397572,11000,서울,KTG 상상마당 홍대,4,877,shared-next-poi-gru-v1,full-data-content-vocab-v1
+398352,11000,서울,마복림 떡볶이,1,878,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4008148,11000,서울,수서역,2,882,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4008833,11000,서울,구로구청,1,884,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4009116,11000,서울,카시나 성수점,1,885,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4009120,11000,서울,스탠드 오일 성수 플래그십 스토어,2,886,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4009452,11000,서울,명동거리,5,887,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4011576,11000,서울,그로브,1,893,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4012635,11000,서울,이미 그 한남점,1,895,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4013088,11000,서울,세이머 온도 플래그십스토어,1,897,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4013101,11000,서울,마뗑킴,1,898,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4013116,11000,서울,비커 성수 플래그십스토어,1,899,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4016987,11000,서울,한식당,1,900,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4025781,11000,서울,이미 그 성수 쇼룸,1,902,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4025814,11000,서울,다이소 성신여대역점,1,903,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4025872,11000,서울,예향,1,904,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4025882,11000,서울,다이소 경복궁역점,1,905,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4025892,11000,서울,교보문고 광화문점,10,906,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4026020,11000,서울,ABC마트 GS 명동중앙점,1,907,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4026611,11000,서울,정샘물 플롭스,1,908,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4026741,11000,서울,위글위글 도산 플래그십스토어,5,909,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4027119,11000,서울,에스쁘아 연남점,1,910,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4027252,11000,서울,오브젝트 삼청점,2,911,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4027406,11000,서울,홈플러스 월드컵점,1,914,shared-next-poi-gru-v1,full-data-content-vocab-v1
+402994,11000,서울,삼청동 수제비,3,915,shared-next-poi-gru-v1,full-data-content-vocab-v1
+403053,11000,서울,명동교자 본점,7,916,shared-next-poi-gru-v1,full-data-content-vocab-v1
+403068,11000,서울,청송 옥,1,917,shared-next-poi-gru-v1,full-data-content-vocab-v1
+403081,11000,서울,필동면옥,2,918,shared-next-poi-gru-v1,full-data-content-vocab-v1
+403995,11000,서울,진주집,4,920,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4078819,11000,서울,AC 호텔 바이 메리어트 서울 강남,2,925,shared-next-poi-gru-v1,full-data-content-vocab-v1
+513517,11000,서울,청수정,1,927,shared-next-poi-gru-v1,full-data-content-vocab-v1
+578330,11000,서울,진주회관,4,928,shared-next-poi-gru-v1,full-data-content-vocab-v1
+650997,11000,서울,명동난타극장,1,935,shared-next-poi-gru-v1,full-data-content-vocab-v1
+690984,11000,서울,청와대 사랑채,1,939,shared-next-poi-gru-v1,full-data-content-vocab-v1
+748186,11000,서울,국립극단 명동예술 극장,1,946,shared-next-poi-gru-v1,full-data-content-vocab-v1
+753981,11000,서울,몽마르트르 공원,1,948,shared-next-poi-gru-v1,full-data-content-vocab-v1
+767780,11000,서울,리버시티 수상스키장,1,949,shared-next-poi-gru-v1,full-data-content-vocab-v1
+775394,11000,서울,광화문광장,21,951,shared-next-poi-gru-v1,full-data-content-vocab-v1
+806322,11000,서울,LX 지인스퀘어 신세계 타임스퀘어점,4,953,shared-next-poi-gru-v1,full-data-content-vocab-v1
+809490,11000,서울,강서습지생태공원,1,954,shared-next-poi-gru-v1,full-data-content-vocab-v1
+815197,11000,서울,세종 충무공이야기,2,955,shared-next-poi-gru-v1,full-data-content-vocab-v1
+837020,11000,서울,왕생가 칼국수,3,957,shared-next-poi-gru-v1,full-data-content-vocab-v1
+970138,11000,서울,반포 한강공원,11,966,shared-next-poi-gru-v1,full-data-content-vocab-v1
+970342,11000,서울,잠원한강공원,5,967,shared-next-poi-gru-v1,full-data-content-vocab-v1
+970460,11000,서울,잠실한강공원,4,968,shared-next-poi-gru-v1,full-data-content-vocab-v1
+970636,11000,서울,이촌한강공원,8,969,shared-next-poi-gru-v1,full-data-content-vocab-v1
+990140,11000,서울,장충체육관,3,971,shared-next-poi-gru-v1,full-data-content-vocab-v1
+992130,11000,서울,키자니아 서울,5,972,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126324,12000,광주,중외공원,2,41,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126350,12000,광주,원효사,1,42,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126383,12000,광주,충장사,1,43,shared-next-poi-gru-v1,full-data-content-vocab-v1
+127060,12000,광주,이장우가옥,1,75,shared-next-poi-gru-v1,full-data-content-vocab-v1
+127539,12000,광주,광주 패밀리랜드,2,81,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129761,12000,광주,광주시립미술관,5,124,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129782,12000,광주,국립광주 박물관,3,125,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130065,12000,광주,광주역사민속박물관,3,131,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1330521,12000,광주,JD 스포츠 광주 충장로 점,5,196,shared-next-poi-gru-v1,full-data-content-vocab-v1
+134997,12000,광주,송정 떡갈비 1호점,2,201,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1621360,12000,광주,5.18민주광장,2,225,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2009775,12000,광주,국립아시아문화전당,36,275,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2033064,12000,광주,광주 기아 챔피언 스피드,2,276,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2033294,12000,광주,국립광주과학관,2,277,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2488192,12000,광주,1913 송정역시장,9,309,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2603494,12000,광주,펭귄 마을,12,346,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2666987,12000,광주,전일빌딩 245,12,392,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2755010,12000,광주,5.18민주화운동 기록관,7,451,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2779116,12000,광주,광주비엔날레,12,504,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2783851,12000,광주,경암 근린공원,1,527,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2859166,12000,광주,산수 쌈밥,5,625,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2874038,12000,광주,갤러리 24카페,1,655,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2924447,12000,광주,광주송정역,5,733,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3006641,12000,광주,뒹굴 동구리,2,772,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3056157,12000,광주,광주솔로몬로파크,1,791,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3442492,12000,광주,동곡 미술관,2,856,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3467907,12000,광주,맷돌 콩물 국수,1,871,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4065124,12000,광주,1년 후 그라운드,1,922,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1013716,26000,부산,서면 젊음의 거리,3,2,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1018702,26000,부산,국제시장 먹자골목,3,3,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1250885,26000,부산,구포시장,1,24,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126078,26000,부산,광안리해수욕장,148,32,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126079,26000,부산,다대포해수욕장,16,33,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126080,26000,부산,송정해수욕장,13,34,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126081,26000,부산,해운대해수욕장,95,35,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126098,26000,부산,일광해수욕장,5,36,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126121,26000,부산,용두산공원,7,37,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126122,26000,부산,송도해수욕장,6,38,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126658,26000,부산,태종대유원지,6,66,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126799,26000,부산,민락수변공원,10,70,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126848,26000,부산,해동용궁사,21,74,shared-next-poi-gru-v1,full-data-content-vocab-v1
+127419,26000,부산,허심청브로이 (휴업 중),1,77,shared-next-poi-gru-v1,full-data-content-vocab-v1
+127445,26000,부산,금강공원,1,78,shared-next-poi-gru-v1,full-data-content-vocab-v1
+127488,26000,부산,BIFF 광장,4,80,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1277679,26000,부산,부산타워,1,87,shared-next-poi-gru-v1,full-data-content-vocab-v1
+127891,26000,부산,대천천 누리길,1,89,shared-next-poi-gru-v1,full-data-content-vocab-v1
+127925,26000,부산,광안리 해변 테마거리,4,90,shared-next-poi-gru-v1,full-data-content-vocab-v1
+127974,26000,부산,을숙도 생태공원,2,92,shared-next-poi-gru-v1,full-data-content-vocab-v1
+128108,26000,부산,스포 원 파크 금정체육공원,1,94,shared-next-poi-gru-v1,full-data-content-vocab-v1
+128886,26000,부산,홍법사,1,105,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129197,26000,부산,영도대교,5,109,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129602,26000,부산,청사포 방파제,1,116,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130252,26000,부산,부산해양자연사박물관,1,139,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1303697,26000,부산,르네에 떼,1,146,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1303714,26000,부산,부산타워,2,147,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130606,26000,부산,국립 수산과학관,2,156,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130668,26000,부산,벡스코,6,159,shared-next-poi-gru-v1,full-data-content-vocab-v1
+131715,26000,부산,부산 아시아드 보조경기장,12,169,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132187,26000,부산,남포지하쇼핑센터,3,175,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132190,26000,부산,자갈치시장,12,176,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132191,26000,부산,국제시장,15,177,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132607,26000,부산,롯데백화점 부산본점,9,191,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1338947,26000,부산,삼락생태공원,2,198,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1428723,26000,부산,이비스 앰배서더호텔 부산시티센터점,1,210,shared-next-poi-gru-v1,full-data-content-vocab-v1
+142998,26000,부산,롯데호텔 부산,1,211,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1607138,26000,부산,부산대학교 인문관,1,220,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1608633,26000,부산,보수동 책방 골목,9,221,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1805965,26000,부산,전포 카페거리,19,233,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1825843,26000,부산,국립 해양 박물관,8,236,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1878218,26000,부산,부평 깡통시장,5,243,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1940208,26000,부산,오륙도 스카이워크,2,262,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1993017,26000,부산,롯데 프리미엄 아웃렛 동부산점,14,272,shared-next-poi-gru-v1,full-data-content-vocab-v1
+229912,26000,부산,씨라 이르 부산아쿠아리움,7,283,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2350092,26000,부산,더베이 11,5,287,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2385666,26000,부산,국립부산과학관,5,290,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2385686,26000,부산,아홉 살 숲,8,291,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2456767,26000,부산,F1963,4,295,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2470024,26000,부산,삼진 어묵 영도 본점,1,304,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2487931,26000,부산,화명생태공원,3,308,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2496023,26000,부산,키자니아 부산,1,313,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2503780,26000,부산,아난티 힐튼 부산,2,319,shared-next-poi-gru-v1,full-data-content-vocab-v1
+252563,26000,부산,봉래산,1,324,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2532877,26000,부산,신세계 프리미엄 아웃렛 부산,3,325,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2551424,26000,부산,국립 일제 강제 동원 역사관,1,327,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2554111,26000,부산,범어사,2,329,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2563357,26000,부산,옥미 아귀찜 본점,1,330,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2605688,26000,부산,부산 현대미술관,7,347,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2609623,26000,부산,개미집,1,354,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2614721,26000,부산,몰운대,2,360,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2650801,26000,부산,뮤지엄 원,5,378,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2661475,26000,부산,회동수원지,1,382,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2663155,26000,부산,죽성 드림세트장,11,387,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2663341,26000,부산,부산 시민공원,4,390,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2668102,26000,부산,수변 최고 돼지국밥 민락 본점,5,395,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2674974,26000,부산,승학산,1,397,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2675011,26000,부산,땅뫼산,1,398,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2675032,26000,부산,청학 배수지 전망대,1,399,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2675047,26000,부산,우암동 도시숲,1,400,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2684712,26000,부산,흰 여울 문화마을,30,402,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2720650,26000,부산,피아트,4,414,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2734243,26000,부산,장안 캠프,1,422,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2756696,26000,부산,부산 화명수목원,2,454,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2763900,26000,부산,서면시장,1,469,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2770124,26000,부산,웨이브 온 커피,2,494,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2776991,26000,부산,버릇 식당,1,500,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2778403,26000,부산,해성 막창집 본점,4,501,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2778487,26000,부산,금수복국 해운대본점,3,503,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2784321,26000,부산,서면 개금밀면,3,530,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2784363,26000,부산,부산 근현대 역사관 별관,2,531,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2785269,26000,부산,수월 경화,1,532,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2785272,26000,부산,고향 연화,2,533,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2785275,26000,부산,다솥맛집 송정점,1,534,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2785277,26000,부산,사천 게장 집,1,535,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2785956,26000,부산,초량 밀면,1,537,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2789451,26000,부산,깃발 집 미주구리 물회,1,542,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2791482,26000,부산,내호냉면,1,544,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2796940,26000,부산,대변항,1,545,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2815627,26000,부산,롯데월드 어드벤처 부산,6,557,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2822240,26000,부산,용호 별빛공원,1,560,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2822334,26000,부산,온천천,2,561,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2827847,26000,부산,퍼프 베이커리,1,565,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2832636,26000,부산,코랄 라느니,3,571,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2832642,26000,부산,풍운장 시골밥상 집,1,572,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2832671,26000,부산,신발원 신관,2,573,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2836405,26000,부산,신기 숲,1,581,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2836450,26000,부산,이재모 피자 본점,3,582,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2838432,26000,부산,임용 백돼지국밥,1,587,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2838922,26000,부산,오르디,1,589,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2841442,26000,부산,톤쇼우,2,594,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2845094,26000,부산,카페 마리 솔,1,599,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2858292,26000,부산,또 시아,1,622,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2858974,26000,부산,타이가텐푸라,2,623,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2859073,26000,부산,구덕포끝집고기 송정점,1,624,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2860833,26000,부산,송 정물 총칼 국수,1,626,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2862152,26000,부산,밀란 더 마켓,45,627,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2865236,26000,부산,회와 제과,4,632,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2869159,26000,부산,디원 베이커리 카페,1,642,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2869241,26000,부산,공원 집,2,643,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2869302,26000,부산,테라비 남포점,1,644,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2869491,26000,부산,영도 면옥,1,645,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2869532,26000,부산,타의 빈,1,646,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2870703,26000,부산,초량 온당,4,649,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2872271,26000,부산,해녀 천지 할미 집,1,652,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2872474,26000,부산,오직 전복죽 기장 끝 집,4,653,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2911203,26000,부산,카페 바이버,1,711,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2911217,26000,부산,합천 일류 돼지국밥 사상점,6,712,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2911916,26000,부산,롯데몰 메종 동부산,1,715,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2917484,26000,부산,롯데백화점 광복점,2,728,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2923582,26000,부산,부산역,11,731,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2924421,26000,부산,트레이더스 홀세일 클럽 서면점,2,732,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2931065,26000,부산,NC백화점 부산대점,2,746,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2931381,26000,부산,TROUBADOUR 서면점,1,747,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2933698,26000,부산,기장 손칼국수,1,751,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2944033,26000,부산,점포 사잇길,3,752,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2991028,26000,부산,광안리해양레포츠센터,5,758,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2994680,26000,부산,클럽 디 오아시스,5,767,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3008128,26000,부산,동생말,1,773,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3008212,26000,부산,이 기대 해안산책로,3,774,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3017319,26000,부산,이 송도 전망대,2,782,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3027780,26000,부산,송림공원,4,783,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3065005,26000,부산,부산요트투어 위드 요트,1,798,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3065360,26000,부산,요트야,6,799,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3075356,26000,부산,르컬렉티브 아시리아,3,805,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3080300,26000,부산,부전시장,3,810,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3080317,26000,부산,부산광역시 체육회 부산실내빙상장,1,811,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3307446,26000,부산,스타필드 시티 명지,2,834,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3334005,26000,부산,굿올데이저카페,1,835,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3345026,26000,부산,BNK 부산은행 아트시네마,2,840,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3423011,26000,부산,선생 조그매,1,852,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3432951,26000,부산,송정 삼대 국밥,5,854,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3442923,26000,부산,쉐이크쉑 부산 서면점,3,857,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3444429,26000,부산,옵스 남천 본점,2,860,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4008037,26000,부산,롯데마트 동부산점,1,880,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4008091,26000,부산,코엔 클로,1,881,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4011128,26000,부산,KTG 상상마당 부산,35,889,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4011143,26000,부산,LUFT MANSION (루프트 맨션),1,890,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4011153,26000,부산,오브젝트 서면점,4,891,shared-next-poi-gru-v1,full-data-content-vocab-v1
+403961,26000,부산,선창 횟집,3,919,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4093693,26000,부산,아세안 문화원,1,926,shared-next-poi-gru-v1,full-data-content-vocab-v1
+630874,26000,부산,낙동강하구에코센터,1,931,shared-next-poi-gru-v1,full-data-content-vocab-v1
+702551,26000,부산,센텀시티 스파랜드,7,940,shared-next-poi-gru-v1,full-data-content-vocab-v1
+769761,26000,부산,다대포 해변공원,3,950,shared-next-poi-gru-v1,full-data-content-vocab-v1
+850847,26000,부산,오사카,1,958,shared-next-poi-gru-v1,full-data-content-vocab-v1
+851286,26000,부산,상국이네,6,959,shared-next-poi-gru-v1,full-data-content-vocab-v1
+987810,26000,부산,동백 섬,7,970,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1115613,27000,대구,수성못,23,16,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1251806,27000,대구,대구근대역사관,4,25,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126130,27000,대구,달성 공원 동물원,2,39,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126160,27000,대구,동화사,2,40,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126816,27000,대구,동산계곡,1,71,shared-next-poi-gru-v1,full-data-content-vocab-v1
+128627,27000,대구,대구 이월드,9,100,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130132,27000,대구,국립대구 박물관,5,134,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130411,27000,대구,코오롱야외음악당,3,149,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130625,27000,대구,대백플라자 갤러리,2,157,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130665,27000,대구,대구오페라하우스,1,158,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130746,27000,대구,국채보상운동 기념공원,3,160,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132104,27000,대구,군위전통시장,1,172,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132257,27000,대구,대구약령 시장,1,185,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132532,27000,대구,서문시장,31,190,shared-next-poi-gru-v1,full-data-content-vocab-v1
+137706,27000,대구,한화리조트 해운대,2,203,shared-next-poi-gru-v1,full-data-content-vocab-v1
+142853,27000,대구,파라다이스호텔 부산,4,209,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1611891,27000,대구,남평 문씨 인흥 세거지,1,222,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1626349,27000,대구,팔공산 케이블카,5,228,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1856967,27000,대구,대구미술관,4,240,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1871383,27000,대구,김광석 다시 그리기 길,16,242,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1894526,27000,대구,윤옥연할매떡볶이 본점,1,246,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1935424,27000,대구,대구예술 발전소,2,259,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1939809,27000,대구,루시드,5,261,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1956986,27000,대구,국립대구과학관,2,264,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2042995,27000,대구,대구 중구 골목투어 근대문화골목(2코스),9,279,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2456837,27000,대구,영화의 전당 비프힐,1,296,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2470055,27000,대구,대구 섬유 박물관,1,305,shared-next-poi-gru-v1,full-data-content-vocab-v1
+250332,27000,대구,주교좌 계산 대성당,7,318,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2570452,27000,대구,대구역,2,331,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2581263,27000,대구,땅땅 치킨 랜드,1,336,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2599899,27000,대구,동성로 로데오거리,4,343,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2610815,27000,대구,드래그 하우스,1,355,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2611140,27000,대구,청라언덕,6,356,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2617724,27000,대구,풍운장 마린시티점,1,361,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2704112,27000,대구,스파크 랜드,17,405,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2738031,27000,대구,푸른 회 식당,1,427,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2742496,27000,대구,동대구역,4,434,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2746368,27000,대구,2.28기념중앙공원,3,437,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2746376,27000,대구,빽다방 대구 교동시장점,1,438,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2751525,27000,대구,신 전 뮤지엄,2,441,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2751543,27000,대구,성당못,1,442,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2756560,27000,대구,생수정식당,1,452,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2756646,27000,대구,네이처파크,2,453,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2766495,27000,대구,아눅앞산,2,480,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2785965,27000,대구,송정면가,1,538,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2789488,27000,대구,해운대 블루라인파크 미포 정거장,5,543,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2818890,27000,대구,스타벅스 그랜드 조선 부산점,1,559,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2840714,27000,대구,롤러 커피,5,593,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2855996,27000,대구,티 안이 티에프,2,617,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2856228,27000,대구,커들 포드,1,618,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2856259,27000,대구,오퐁드부아 티 하우스,1,619,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2864490,27000,대구,MRNW,3,630,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2903812,27000,대구,해운대 밀면,3,697,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2915309,27000,대구,홈플러스 칠곡점,1,724,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2916550,27000,대구,신세계 센텀시티몰,2,726,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2917200,27000,대구,롯데백화점 센텀시티점,2,727,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2928786,27000,대구,신세계백화점 센텀시티점,12,735,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2930096,27000,대구,신세계백화점 대구점,4,738,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2930650,27000,대구,나그놀,1,740,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2930746,27000,대구,동아백화점 쇼핑점,2,742,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2994353,27000,대구,크레이지팡팡,3,763,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3008745,27000,대구,라움아 틀 리에,1,775,shared-next-poi-gru-v1,full-data-content-vocab-v1
+637751,27000,대구,낙영 찜 갈비 본점,3,932,shared-next-poi-gru-v1,full-data-content-vocab-v1
+638187,27000,대구,중화반점,2,933,shared-next-poi-gru-v1,full-data-content-vocab-v1
+651687,27000,대구,국채보상운동 기념공원,1,936,shared-next-poi-gru-v1,full-data-content-vocab-v1
+705590,27000,대구,화산 산성,1,941,shared-next-poi-gru-v1,full-data-content-vocab-v1
+858791,27000,대구,물 베기 한정식,1,961,shared-next-poi-gru-v1,full-data-content-vocab-v1
+998882,27000,대구,안지 곱창,1,973,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1113230,28000,인천,계양산,3,14,shared-next-poi-gru-v1,full-data-content-vocab-v1
+125519,28000,인천,자유 공원,5,27,shared-next-poi-gru-v1,full-data-content-vocab-v1
+125533,28000,인천,보문사,1,28,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126676,28000,인천,용궁사,1,67,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126796,28000,인천,인천항 연안 부두,2,69,shared-next-poi-gru-v1,full-data-content-vocab-v1
+127585,28000,인천,월미도,9,83,shared-next-poi-gru-v1,full-data-content-vocab-v1
+128027,28000,인천,인천대공원,3,93,shared-next-poi-gru-v1,full-data-content-vocab-v1
+128767,28000,인천,을왕리 해수욕장,6,101,shared-next-poi-gru-v1,full-data-content-vocab-v1
+128818,28000,인천,민머루해수욕장,1,103,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129128,28000,인천,팔미도,1,107,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129256,28000,인천,왕산해수욕장,2,110,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129605,28000,인천,선녀바위,4,117,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129606,28000,인천,주교좌답동 성 바오로 성당,1,118,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130060,28000,인천,인천상륙작전기념관,1,130,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130911,28000,인천,부평역사박물관,2,164,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132381,28000,인천,신포국제시장,10,187,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132659,28000,인천,롯데백화점 인천점,2,192,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132742,28000,인천,인천종합어시장,4,195,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1617908,28000,인천,인하대학교 용현 캠퍼스,1,223,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1617959,28000,인천,용화선원,1,224,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1851364,28000,인천,인천도시 역사관,6,238,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1890389,28000,인천,팟알,2,245,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1931699,28000,인천,짜장면 박물관,4,256,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1938168,28000,인천,송월동 동화마을,13,260,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2458348,28000,인천,BMW 드라이빙 센터,2,297,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2465107,28000,인천,셀렉트 커피 송도센트럴파크점,1,299,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2465126,28000,인천,신기시장,1,300,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2465140,28000,인천,한국이민사 박물관,2,301,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2465152,28000,인천,청라 호수 공원,2,302,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2492108,28000,인천,대룡시장,3,310,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2601710,28000,인천,인천개항 박물관,5,344,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2601714,28000,인천,인천아트플랫폼,1,345,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2606233,28000,인천,영종 씨사이드 레일바이크,3,352,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2612802,28000,인천,강화 루지,4,357,shared-next-poi-gru-v1,full-data-content-vocab-v1
+264512,28000,인천,인천 차이나타운,35,372,shared-next-poi-gru-v1,full-data-content-vocab-v1
+264517,28000,인천,아시안 해변,2,373,shared-next-poi-gru-v1,full-data-content-vocab-v1
+264616,28000,인천,수기 해변,1,374,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2650745,28000,인천,파라다이스 시티,12,376,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2675429,28000,인천,아라 마루 전망대,1,401,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2689322,28000,인천,트리플 스트리트,12,403,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2709524,28000,인천,삼목선착장,1,409,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2711042,28000,인천,인천국제공항,2,410,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2734015,28000,인천,강화 캠핑파크,1,421,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2753108,28000,인천,영종진공원,2,446,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2758144,28000,인천,진복호,1,456,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2765400,28000,인천,미추홀공원,1,475,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2765404,28000,인천,신거북시장,1,476,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2766397,28000,인천,해돋이공원,1,479,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2767445,28000,인천,경인아라뱃길,1,482,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2767529,28000,인천,문학산,1,483,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2767556,28000,인천,원적산,1,484,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2767580,28000,인천,경인아라뱃길,3,485,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2767851,28000,인천,할리스 인천 한옥마을 점,1,486,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2767888,28000,인천,송도 달빛축제공원,3,487,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2768099,28000,인천,신도항(옹진),1,488,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2768101,28000,인천,동해 막국수,7,489,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2768179,28000,인천,송쭈집 본점,2,490,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2768196,28000,인천,청라 호수 공원,1,491,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2769476,28000,인천,잉글랜드 왕돈가스,1,492,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2769482,28000,인천,중 하루,1,493,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2779442,28000,인천,인천개항장 근대건축전시관,2,506,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2780280,28000,인천,미애네 칼국수 2호점,2,509,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2780309,28000,인천,바다 앞 테라스,7,510,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2781332,28000,인천,신포 닭강정 본점,5,511,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2781334,28000,인천,월미도 선착장,3,512,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2781335,28000,인천,월미문화의 거리,6,513,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2781336,28000,인천,삼국지 벽화거리,1,514,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2781591,28000,인천,하늘정원 주차장,3,515,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2782697,28000,인천,마리앤쥬,1,520,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2782738,28000,인천,인천시민에 집,1,521,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2783003,28000,인천,마이랜드,6,523,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2787144,28000,인천,누들 플랫폼,2,539,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2805968,28000,인천,브라운 핸즈 개항으로,2,549,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2812241,28000,인천,차 덕분,2,554,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2834112,28000,인천,고양이 역 카페,1,577,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2836893,28000,인천,일이삼 간장게장,1,583,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2837034,28000,인천,남동공단 떡볶이,2,584,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2838923,28000,인천,신소당,1,590,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2839695,28000,인천,카페 월트,1,592,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2845110,28000,인천,신승 반점 본점,1,600,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2845309,28000,인천,신신 분식,2,601,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2846860,28000,인천,전라도 대왕조개구이랑 칼국수,1,605,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2847004,28000,인천,해상 궁,1,606,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2848938,28000,인천,카페 아키라,3,610,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2853718,28000,인천,포크,1,614,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2875695,28000,인천,을왕리 3도씨 해물갈비,1,656,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2905193,28000,인천,호랑이 곳간,1,699,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2906334,28000,인천,송도센트럴파크,13,704,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2907379,28000,인천,봄이 보리밥 영종점,3,706,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2932001,28000,인천,파라다이스 시티 플라자,2,750,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2993378,28000,인천,씨사이드 파크,2,761,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2994418,28000,인천,G 타워 전망대,4,764,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2994530,28000,인천,대불호텔 전시관,2,765,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3003517,28000,인천,일본풍 거리,2,771,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3011747,28000,인천,화개 정원,2,776,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3061216,28000,인천,소찬공원,7,797,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3074715,28000,인천,아시안 갯벌 체험장,1,802,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3097744,28000,인천,국립 세계문자 박물관,7,826,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3306078,28000,인천,모다 아울렛 인천점,1,830,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3334028,28000,인천,메이 드림,2,836,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3335782,28000,인천,동양 염전 베이커리 카페,1,838,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3407606,28000,인천,예단포둘레길,1,851,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3446437,28000,인천,디츠겐,1,861,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3449616,28000,인천,더더,2,866,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3525625,28000,인천,포디엄 126,1,873,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4012894,28000,인천,강남시장,1,896,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4027319,28000,인천,모래내시장,1,912,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4027353,28000,인천,현대 프리미엄 아울렛 송도점,13,913,shared-next-poi-gru-v1,full-data-content-vocab-v1
+652305,28000,인천,한중문화관,2,937,shared-next-poi-gru-v1,full-data-content-vocab-v1
+724081,28000,인천,풍미,2,943,shared-next-poi-gru-v1,full-data-content-vocab-v1
+742171,28000,인천,송도컨벤시아,3,945,shared-next-poi-gru-v1,full-data-content-vocab-v1
+787644,28000,인천,쉐라톤 그랜드 인천 호텔,3,952,shared-next-poi-gru-v1,full-data-content-vocab-v1
+852304,28000,인천,국립생물자원관,1,960,shared-next-poi-gru-v1,full-data-content-vocab-v1
+879086,28000,인천,월미공원,6,962,shared-next-poi-gru-v1,full-data-content-vocab-v1
+945052,28000,인천,제물포구락부,2,963,shared-next-poi-gru-v1,full-data-content-vocab-v1
+947611,28000,인천,개항장 문화마당,1,965,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1089992,30000,대전,대전교통 문화연수원,1,12,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1125312,30000,대전,대전 어린이 회관,9,17,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1125480,30000,대전,상소동 산림욕장,5,18,shared-next-poi-gru-v1,full-data-content-vocab-v1
+125858,30000,대전,유성온천 불가마 사우나,3,30,shared-next-poi-gru-v1,full-data-content-vocab-v1
+125994,30000,대전,엑스포과학공원,27,31,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126838,30000,대전,뿌리공원,4,72,shared-next-poi-gru-v1,full-data-content-vocab-v1
+126846,30000,대전,대청호,5,73,shared-next-poi-gru-v1,full-data-content-vocab-v1
+127641,30000,대전,대전 오월드,17,85,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129438,30000,대전,장태산자연휴양림,9,112,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129785,30000,대전,국립 중앙과학관,37,126,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130550,30000,대전,한국지질자원연구원 지질박물관,2,154,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130551,30000,대전,대전시립미술관,73,155,shared-next-poi-gru-v1,full-data-content-vocab-v1
+130890,30000,대전,옛 터 민속박물관,2,163,shared-next-poi-gru-v1,full-data-content-vocab-v1
+131720,30000,대전,대전 월드컵 경기장,4,171,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132505,30000,대전,으능정이 문화의 거리,17,189,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132661,30000,대전,성심당 롯데백화점 대전점,10,193,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1434477,30000,대전,대전중앙시장,42,213,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1720749,30000,대전,계족산 황톳길,3,229,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1796079,30000,대전,성심당 본점,268,232,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1807489,30000,대전,광천 식당,18,234,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1807586,30000,대전,때 화장,7,235,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1906578,30000,대전,천연기념물 센터,9,248,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1923953,30000,대전,서원골 유황오리,1,254,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1955818,30000,대전,대전 도산서원,4,263,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1964617,30000,대전,대전근현대사전시관,18,265,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1964622,30000,대전,으능정이 스카이로드,14,266,shared-next-poi-gru-v1,full-data-content-vocab-v1
+231937,30000,대전,대전 회덕 동춘당,2,284,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2407314,30000,대전,수통골,3,293,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2580239,30000,대전,개천 식당,3,333,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2580604,30000,대전,대선 칼국수,6,334,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2580935,30000,대전,미소본가 스마일 칼국수,3,335,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2581513,30000,대전,시민 칼국수,5,337,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2581759,30000,대전,오씨칼국수,28,338,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2582117,30000,대전,진로 집,18,339,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2582134,30000,대전,천리 집,1,340,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2605899,30000,대전,유성온천공원 족욕체험장,6,348,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2605906,30000,대전,소제동 철도관사촌,5,349,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2662681,30000,대전,국립대전 숲체원,4,384,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2662682,30000,대전,소제동 철도관사촌,2,385,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2663239,30000,대전,테마 오래,16,389,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2667003,30000,대전,와타요업,5,393,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2674960,30000,대전,유림공원,5,396,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2721465,30000,대전,다다르다,15,415,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2722927,30000,대전,트래블 라운지,16,417,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2732202,30000,대전,우리들 공원,3,419,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2734919,30000,대전,온천손칼국수 주꾸미,2,423,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2738011,30000,대전,대전 곤충생태관,3,425,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2738026,30000,대전,엑스포다리,8,426,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2738037,30000,대전,엑스포시민광장,19,428,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2752861,30000,대전,대동 벽화마을,2,444,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2758629,30000,대전,대전 아쿠아리움,2,461,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2758666,30000,대전,보라매공원,2,462,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2760707,30000,대전,유성온천공원 족욕체험장,11,463,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2762000,30000,대전,장태산,1,466,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2766990,30000,대전,한화생명 이글스 파크,11,481,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2775503,30000,대전,대전역 동광장,2,498,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2775516,30000,대전,원조태평소국밥,34,499,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2779504,30000,대전,엑스포과학공원 한빛탑,43,508,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2782788,30000,대전,대전엑스포 아쿠아리움,13,522,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2828095,30000,대전,시골밥상,4,566,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2865825,30000,대전,치앙마이 방콕,7,633,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2865929,30000,대전,베스타 뷔페,1,634,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2866029,30000,대전,토미야,4,635,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2866245,30000,대전,매봉 식당,1,636,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2866943,30000,대전,라드커피 본점,1,637,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2899246,30000,대전,어썸 8 더 대청,1,673,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2899345,30000,대전,꾸드뱅,1,674,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2899479,30000,대전,이태리국시 본점,1,676,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2899503,30000,대전,오한순 손수제비,1,677,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2899566,30000,대전,떡만집 본점,11,678,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2900942,30000,대전,공간 태리,5,690,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2911526,30000,대전,갤러리아백화점 타임월드점,7,714,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2912106,30000,대전,비머스트,1,716,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2913376,30000,대전,선화동 소머리 해장국 본점,5,717,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2914327,30000,대전,무라텐,1,721,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2914963,30000,대전,현암뚝방구이,2,722,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2930677,30000,대전,대전 반려동물공원,1,741,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3038939,30000,대전,커피 인터뷰 궁동점,3,786,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3046936,30000,대전,프렐류드,18,789,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3074307,30000,대전,둔산대공원,4,801,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3080289,30000,대전,보문산,3,809,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3085034,30000,대전,헤레디움,2,822,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3454325,30000,대전,꿀 잼 도시 대전 홍보관 대전 신세계 아트앤사이언스점,5,868,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3454381,30000,대전,현대 프리미엄 아웃렛 대전점,4,869,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3494052,30000,대전,여기 소제,4,872,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3574256,30000,대전,하레 하레 도안점,1,876,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4008007,30000,대전,대전역,35,879,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4008765,30000,대전,대전복합터미널,2,883,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4009733,30000,대전,서대전역,5,888,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4012281,30000,대전,롯데백화점 대전점,1,894,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4077519,30000,대전,아저씨 돈가스,3,924,shared-next-poi-gru-v1,full-data-content-vocab-v1
+590097,30000,대전,이응노미술관,36,929,shared-next-poi-gru-v1,full-data-content-vocab-v1
+644085,30000,대전,대전컨벤션 센터,7,934,shared-next-poi-gru-v1,full-data-content-vocab-v1
+705678,30000,대전,장동산림욕장,3,942,shared-next-poi-gru-v1,full-data-content-vocab-v1
+741658,30000,대전,한밭수목원,139,944,shared-next-poi-gru-v1,full-data-content-vocab-v1
+821963,30000,대전,이화원,6,956,shared-next-poi-gru-v1,full-data-content-vocab-v1
+945477,30000,대전,우암사적공원,5,964,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1064469,41110,수원,수원 화성 연무대 관광안내소,3,11,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1177952,41110,수원,못골종합시장,3,20,shared-next-poi-gru-v1,full-data-content-vocab-v1
+125512,41110,수원,팔달공원,3,26,shared-next-poi-gru-v1,full-data-content-vocab-v1
+125555,41110,수원,수원 화성,28,29,shared-next-poi-gru-v1,full-data-content-vocab-v1
+129437,41110,수원,화성행궁,95,111,shared-next-poi-gru-v1,full-data-content-vocab-v1
+131719,41110,수원,수원 월드컵 경기장,5,170,shared-next-poi-gru-v1,full-data-content-vocab-v1
+132352,41110,수원,수원 영 동 시장,2,186,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1921150,41110,수원,수원 화성 박물관,14,251,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1925403,41110,수원,해우재,2,255,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2033483,41110,수원,수원시립미술관,26,278,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2379222,41110,수원,수원 광교 박물관,1,288,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2462893,41110,수원,삼성 이노베이션 뮤지엄,1,298,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2480899,41110,수원,수원 화성 북동포루,11,307,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2613658,41110,수원,방화수류정,42,358,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2613664,41110,수원,수원 통닭거리,1,359,shared-next-poi-gru-v1,full-data-content-vocab-v1
+264386,41110,수원,수원 화성 팔달문,8,365,shared-next-poi-gru-v1,full-data-content-vocab-v1
+264388,41110,수원,수원 화성 화서문,9,366,shared-next-poi-gru-v1,full-data-content-vocab-v1
+264390,41110,수원,장안문,26,367,shared-next-poi-gru-v1,full-data-content-vocab-v1
+264392,41110,수원,창룡문,7,368,shared-next-poi-gru-v1,full-data-content-vocab-v1
+264394,41110,수원,수원 화성 화홍문,19,369,shared-next-poi-gru-v1,full-data-content-vocab-v1
+264400,41110,수원,수원향교,3,370,shared-next-poi-gru-v1,full-data-content-vocab-v1
+264408,41110,수원,수원 화성 서장대,4,371,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2662855,41110,수원,광교호수공원,16,386,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2663187,41110,수원,회동수원지,1,388,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2667588,41110,수원,수원 공방거리,2,394,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2714220,41110,수원,플라잉 수원,5,412,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2714556,41110,수원,팔달산,4,413,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2745737,41110,수원,북수원 온천,1,435,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2745995,41110,수원,행궁동 벽화마을,18,436,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2747132,41110,수원,경기 상상 캠퍼스,2,439,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2752650,41110,수원,팔달문시장,8,443,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2752971,41110,수원,지동시장,3,445,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2753658,41110,수원,북수원 시장,1,447,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2753679,41110,수원,남문로데오시장,1,448,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2753972,41110,수원,유치 회관,5,449,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2754009,41110,수원,오초,1,450,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2765531,41110,수원,백 청우 칼국수 본점 인계동,1,478,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2828475,41110,수원,포커스온 나우,1,568,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2829013,41110,수원,김성민 커피 신별관,1,569,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2830470,41110,수원,서동진의 커피 랩 본점,1,570,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2867501,41110,수원,운 멜로 4호점,2,639,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2867885,41110,수원,연밀,2,640,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2868656,41110,수원,가락국수 일 번가,1,641,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2873447,41110,수원,진미 통닭,5,654,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2892820,41110,수원,킵댓 본점,4,658,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2892874,41110,수원,팜투하녹,2,659,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2892936,41110,수원,경안당,1,660,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2893042,41110,수원,도미닉 커피 랩,2,661,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2893073,41110,수원,레드브릭 커피하우스,1,662,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2893530,41110,수원,슬로 써니사이드,3,663,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2893534,41110,수원,에이프런,1,664,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2907527,41110,수원,수원역,4,708,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2916318,41110,수원,송죽 약방,1,725,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2944481,41110,수원,국립 농업박물관,4,753,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2998800,41110,수원,영흥 수목원,4,770,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3033047,41110,수원,행리단길,15,784,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3033796,41110,수원,수원 구 부국원,1,785,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3076051,41110,수원,일월 수목원,15,806,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3080477,41110,수원,수원 전통문화관 예절교육관,8,812,shared-next-poi-gru-v1,full-data-content-vocab-v1
+316296,41110,수원,봉녕사,1,827,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3354946,41110,수원,일월 수목원 카페 데이 지원,1,843,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3355253,41110,수원,골 디스,3,844,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3355366,41110,수원,열두 알우 똥집,3,845,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3443259,41110,수원,앨리웨이 광교,4,859,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4011490,41110,수원,AK플라자 수원,9,892,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4025399,41110,수원,갤러리아백화점 광교점,7,901,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4054880,41110,수원,정지영커피로스터즈 장안문점,4,921,shared-next-poi-gru-v1,full-data-content-vocab-v1
+4076762,41110,수원,광교 푸른 숲 도서관,1,923,shared-next-poi-gru-v1,full-data-content-vocab-v1
+602854,41110,수원,본 수원갈비 본점,2,930,shared-next-poi-gru-v1,full-data-content-vocab-v1
+750947,41110,수원,효원공원 월화원,11,947,shared-next-poi-gru-v1,full-data-content-vocab-v1
+128278,48120,창원,콰이강의 다리 저도 스카이워크,2,97,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1622326,48120,창원,마산 어 시장,3,226,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1622590,48120,창원,경남도립미술관,4,227,shared-next-poi-gru-v1,full-data-content-vocab-v1
+1748884,48120,창원,315아트센터,1,230,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2503970,48120,창원,가락국수 한 그릇,2,320,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2575790,48120,창원,개성 순대,1,332,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2627175,48120,창원,경남 마산로봇랜드,2,362,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2656383,48120,창원,용지공원 용지호수 공원,1,380,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2764090,48120,창원,해양드라마 세트장,2,470,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2764156,48120,창원,창원 NC 파크,3,471,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2838789,48120,창원,로도스,1,588,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2844199,48120,창원,라온하제,1,596,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2844231,48120,창원,카츠,1,597,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2844532,48120,창원,카페 섬섬,1,598,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2863958,48120,창원,용지공원 용지호수 공원,2,628,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2864150,48120,창원,3.15 해양누리공원,1,629,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2864877,48120,창원,백령 카페,1,631,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2905887,48120,창원,신세계백화점 마산점,1,702,shared-next-poi-gru-v1,full-data-content-vocab-v1
+2930991,48120,창원,홈플러스 마산점,1,745,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3304841,48120,창원,창원 가로수길,1,828,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3386455,48120,창원,장수 암,6,847,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3397899,48120,창원,스파 더 스페이스,8,849,shared-next-poi-gru-v1,full-data-content-vocab-v1
+3456409,48120,창원,삼각지공원,1,870,shared-next-poi-gru-v1,full-data-content-vocab-v1
+662127,48120,창원,주남저수지 생태학습관,1,938,shared-next-poi-gru-v1,full-data-content-vocab-v1

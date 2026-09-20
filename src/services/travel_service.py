@@ -15,7 +15,6 @@ from src.fallback.travel import (
     validate_forced_content_ids_fit,
 )
 from src.inference import runtime as runtime_state
-from src.inference.recommender import recommend_backend_area_limited
 from src.schemas.travel import (
     GenerateCourseResponse,
     GenerateCourseStep,
@@ -199,23 +198,6 @@ def central_tourism_recommend_response(
     return RecommendResponse(recommendations=recommendations[:top_k])
 
 
-def central_tourism_recommend_response(
-    area_code: str,
-    content_id_sequence: list[str],
-    top_k: int,
-    log_extra: Mapping[str, Any],
-) -> RecommendResponse:
-    try:
-        items = build_central_tourism_recommendation_payload(area_code, top_k)
-    except Exception:
-        logger.exception(
-            "central tourism fallback failed; using static recommendation response",
-            extra={**log_extra, "event": "recommend_central_tourism_fallback_failure"},
-        )
-        return fallback_recommend_response_or_500(area_code, content_id_sequence, log_extra)
-    return RecommendResponse(recommendations=[RecommendItem(**item) for item in items])
-
-
 def fallback_course_response_or_500(
     area_code: str,
     trip_days: int,
@@ -293,45 +275,42 @@ class TravelService:
             user_features, trip_days = travel_generate_request_to_user_features(request)
             desired_poi_count = trip_days * COURSE_POIS_PER_DAY
             forced_content_ids = validate_forced_content_ids_fit(request.contentIdList, desired_poi_count)
-            if runtime_state.COURSE_RUNTIME is None:
-                log_extra = {
-                    "event": "course_fallback",
-                    **_log_context(
-                        endpoint="/generate-course",
-                        area_code=request.areaCode,
-                        trip_days=trip_days,
-                        runtime="course_decoder",
-                        fallback_reason="model_unavailable",
-                    ),
-                }
-                logger.warning(
-                    "course runtime unavailable; using fallback course response fallback_reason=model_unavailable",
-                    extra=log_extra,
-                )
-                return fallback_course_response_or_500(request.areaCode, trip_days, forced_content_ids, log_extra)
-            content_ids, steps = runtime_state.COURSE_RUNTIME.generate(
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+        if runtime_state.SHARED_RUNTIME is None:
+            log_extra = {
+                "event": "course_fallback",
+                **_log_context(
+                    endpoint="/generate-course",
+                    area_code=request.areaCode,
+                    trip_days=trip_days,
+                    runtime="shared_next_poi_gru",
+                    fallback_reason="model_unavailable",
+                ),
+            }
+            logger.warning(
+                "course runtime unavailable; using fallback course response fallback_reason=model_unavailable",
+                extra=log_extra,
+            )
+            return fallback_course_response_or_500(request.areaCode, trip_days, forced_content_ids, log_extra)
+
+        try:
+            content_ids, steps = runtime_state.SHARED_RUNTIME.generate(
                 user_features=user_features,
                 trip_days=trip_days,
                 desired_poi_count=desired_poi_count,
                 duplicate_masking=True,
                 forced_content_ids=forced_content_ids,
-                allowed_content_ids=fallback_content_ids_for_area(request.areaCode),
             )
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
         except Exception:
-            trip_days = parse_int_choice("travelDuration", request.travelDuration, {1, 2, 3})
-            forced_content_ids = validate_forced_content_ids_fit(
-                request.contentIdList,
-                trip_days * COURSE_POIS_PER_DAY,
-            )
             log_extra = {
                 "event": "course_inference_failure",
                 **_log_context(
                     endpoint="/generate-course",
                     area_code=request.areaCode,
                     trip_days=trip_days,
-                    runtime="course_decoder",
+                    runtime="shared_next_poi_gru",
                     fallback_reason="inference_error",
                 ),
             }
@@ -348,7 +327,7 @@ class TravelService:
                     endpoint="/generate-course",
                     area_code=request.areaCode,
                     trip_days=trip_days,
-                    runtime="course_decoder",
+                    runtime="shared_next_poi_gru",
                 ),
             },
         )
@@ -375,7 +354,7 @@ class TravelService:
                     endpoint="/recommend",
                     area_code=request.areaCode,
                     trip_days=trip_days,
-                    runtime="tiny_gru",
+                    runtime="shared_next_poi_gru",
                     fallback_reason="empty_sequence_central_tourism",
                 ),
             }
@@ -397,7 +376,7 @@ class TravelService:
                     endpoint="/recommend",
                     area_code=request.areaCode,
                     trip_days=trip_days,
-                    runtime="tiny_gru",
+                    runtime="shared_next_poi_gru",
                     fallback_reason="full_course_sequence",
                 ),
             }
@@ -412,14 +391,14 @@ class TravelService:
                 log_extra,
                 required_features,
             )
-        if runtime_state.RUNTIME is None:
+        if runtime_state.SHARED_RUNTIME is None:
             log_extra = {
                 "event": "recommend_fallback",
                 **_log_context(
                     endpoint="/recommend",
                     area_code=request.areaCode,
                     trip_days=trip_days,
-                    runtime="tiny_gru",
+                    runtime="shared_next_poi_gru",
                     fallback_reason="model_unavailable",
                 ),
             }
@@ -436,14 +415,33 @@ class TravelService:
             )
 
         try:
-            allowed_content_ids = set(fallback_content_ids_for_area(request.areaCode))
-            recommendations = recommend_backend_area_limited(
-                runtime=runtime_state.RUNTIME,
+            recommendations = runtime_state.SHARED_RUNTIME.recommend(
                 content_id_sequence=request.contentIdSequence,
                 user_features=user_features,
-                allowed_content_ids=allowed_content_ids,
+                area_code=request.areaCode,
                 top_k=self.settings.backend_recommendation_candidate_k,
             )
+            if not recommendations:
+                log_extra = {
+                    "event": "recommend_fallback",
+                    **_log_context(
+                        endpoint="/recommend",
+                        area_code=request.areaCode,
+                        trip_days=trip_days,
+                        runtime="shared_next_poi_gru",
+                        fallback_reason="empty_known_sequence",
+                    ),
+                }
+                logger.info(
+                    "recommendation skipped for empty known sequence; using fallback recommendation response",
+                    extra=log_extra,
+                )
+                return fallback_recommend_response_or_500(
+                    request.areaCode,
+                    request.contentIdSequence,
+                    log_extra,
+                    required_features,
+                )
             seen = {str(content_id) for content_id in request.contentIdSequence}
             if len(recommendations) < self.settings.backend_recommendation_candidate_k:
                 recommendations = complete_area_limited_recommendations(
@@ -462,7 +460,7 @@ class TravelService:
                             endpoint="/recommend",
                             area_code=request.areaCode,
                             trip_days=trip_days,
-                            runtime="tiny_gru",
+                            runtime="shared_next_poi_gru",
                         ),
                     },
                     logger=logger,
@@ -476,7 +474,7 @@ class TravelService:
                             endpoint="/recommend",
                             area_code=request.areaCode,
                             trip_days=trip_days,
-                            runtime="tiny_gru",
+                            runtime="shared_next_poi_gru",
                         ),
                     },
                 )
@@ -492,7 +490,7 @@ class TravelService:
                         endpoint="/recommend",
                         area_code=request.areaCode,
                         trip_days=trip_days,
-                        runtime="tiny_gru",
+                        runtime="shared_next_poi_gru",
                     ),
                 },
             )
@@ -504,7 +502,7 @@ class TravelService:
                     endpoint="/recommend",
                     area_code=request.areaCode,
                     trip_days=trip_days,
-                    runtime="tiny_gru",
+                    runtime="shared_next_poi_gru",
                     fallback_reason="inference_error",
                 ),
             }
