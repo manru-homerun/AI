@@ -199,23 +199,6 @@ def central_tourism_recommend_response(
     return RecommendResponse(recommendations=recommendations[:top_k])
 
 
-def central_tourism_recommend_response(
-    area_code: str,
-    content_id_sequence: list[str],
-    top_k: int,
-    log_extra: Mapping[str, Any],
-) -> RecommendResponse:
-    try:
-        items = build_central_tourism_recommendation_payload(area_code, top_k)
-    except Exception:
-        logger.exception(
-            "central tourism fallback failed; using static recommendation response",
-            extra={**log_extra, "event": "recommend_central_tourism_fallback_failure"},
-        )
-        return fallback_recommend_response_or_500(area_code, content_id_sequence, log_extra)
-    return RecommendResponse(recommendations=[RecommendItem(**item) for item in items])
-
-
 def fallback_course_response_or_500(
     area_code: str,
     trip_days: int,
@@ -384,11 +367,11 @@ class TravelService:
                 extra=log_extra,
             )
             return central_tourism_recommend_response(
-                request.areaCode,
-                [],
-                self.settings.backend_recommendation_top_k,
-                log_extra,
-                required_features,
+                area_code=request.areaCode,
+                content_id_sequence=[],
+                top_k=self.settings.backend_recommendation_top_k,
+                log_extra=log_extra,
+                required_accessibility_features=required_features,
             )
         if len(request.contentIdSequence) == desired_poi_count:
             log_extra = {
@@ -406,11 +389,11 @@ class TravelService:
                 extra=log_extra,
             )
             return central_tourism_recommend_response(
-                request.areaCode,
-                request.contentIdSequence,
-                self.settings.backend_recommendation_top_k,
-                log_extra,
-                required_features,
+                area_code=request.areaCode,
+                content_id_sequence=request.contentIdSequence,
+                top_k=self.settings.backend_recommendation_top_k,
+                log_extra=log_extra,
+                required_accessibility_features=required_features,
             )
         if runtime_state.RUNTIME is None:
             log_extra = {
