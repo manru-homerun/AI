@@ -31,7 +31,7 @@ def test_central_tourism_api_url_uses_current_locgo_service() -> None:
     assert CENTRAL_TOURISM_API_URL == "https://apis.data.go.kr/B551011/LocgoHubTarService1/areaBasedList1"
 
 
-def test_central_tourism_uses_manual_area_params_and_hub_tats_code(monkeypatch) -> None:
+def test_central_tourism_uses_manual_area_params_and_tourapi_content_id(monkeypatch) -> None:
     assert CENTRAL_TOURISM_BASE_YM == "202504"
     assert TOURAPI_AREA_PARAMS_BY_BACKEND_AREA == {
         "11000": {"areaCd": "11", "signguCd": "11710"},
@@ -47,14 +47,27 @@ def test_central_tourism_uses_manual_area_params_and_hub_tats_code(monkeypatch) 
     monkeypatch.setattr(
         "src.fallback.travel.fetch_central_tourism_items",
         lambda area_code, top_k: [
-            {"hubTatsCd": f"hub-{index}", "hubTatsNm": f"spot-{index}"}
+            {"contentid": f"{1000 + index}", "hubTatsCd": f"hub-{index}", "hubTatsNm": f"spot-{index}"}
             for index in range(1, top_k + 1)
         ],
     )
 
     recommendations = build_central_tourism_recommendation_payload("11000", 4)
 
-    assert [item["content_id"] for item in recommendations] == ["hub-1", "hub-2", "hub-3", "hub-4"]
+    assert [item["content_id"] for item in recommendations] == ["1001", "1002", "1003", "1004"]
+
+
+def test_central_tourism_rejects_hub_tats_code_as_content_id(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "src.fallback.travel.fetch_central_tourism_items",
+        lambda area_code, top_k: [
+            {"hubTatsCd": f"hub-{index}", "hubTatsNm": f"spot-{index}"}
+            for index in range(1, top_k + 1)
+        ],
+    )
+
+    with pytest.raises(RuntimeError, match="too few items"):
+        build_central_tourism_recommendation_payload("11000", 4)
 
 
 def test_suggest_travel_spots_returns_four_fallback_items(monkeypatch, backend_payload) -> None:
@@ -288,10 +301,26 @@ def test_accessibility_feature_detection_requires_requested_features() -> None:
 
     features = accessibility.accessibility_features_from_items(items)
 
-    assert {"disabled", "child"}.issubset(features)
-    assert "elderly" not in features
-    assert {"disabled", "child"}.issubset(features)
-    assert not {"disabled", "elderly"}.issubset(features)
+    assert {"disabled", "elderly", "child"}.issubset(features)
+
+
+def test_accessibility_feature_detection_uses_barrierfree_field_names() -> None:
+    items = [
+        {
+            "wheelchair": "대여 가능",
+            "elevator": "승강기 이용 가능",
+            "parking": "장애인 주차장 있음",
+            "route": "출입구까지 경사로 설치",
+            "stroller": "대여 가능",
+            "helpdog": "없음",
+        }
+    ]
+
+    features = accessibility.accessibility_features_from_items(items)
+
+    assert "disabled" in features
+    assert "elderly" in features
+    assert "child" in features
 
 
 def test_suggest_travel_spots_skips_accessibility_filter_when_flags_are_false(
@@ -328,7 +357,7 @@ def test_suggest_travel_spots_skips_accessibility_filter_when_flags_are_false(
     assert recommended_ids == seoul_ids[2:6]
 
 
-def test_suggest_travel_spots_filters_ten_candidates_by_disabled_accessibility(
+def test_suggest_travel_spots_filters_candidate_pool_by_disabled_accessibility(
     monkeypatch, backend_payload
 ) -> None:
     seoul_ids = AREA_FALLBACK_IDS["11000"]
@@ -353,7 +382,7 @@ def test_suggest_travel_spots_filters_ten_candidates_by_disabled_accessibility(
         called_ids.append(content_id)
         if content_id in accessible_ids:
             return [{"wheelchair": "휠체어 접근 가능, 장애인 화장실 있음"}]
-        return [{"parking": "일반 주차장 있음"}]
+        return [{"contentid": content_id}]
 
     monkeypatch.setattr(accessibility, "fetch_barrierfree_detail_items", fake_fetch)
     client = TestClient(tiny_gru_app.app)
@@ -369,7 +398,7 @@ def test_suggest_travel_spots_filters_ten_candidates_by_disabled_accessibility(
     assert response.status_code == 200
     recommended_ids = [item["content_id"] for item in response.json()["recommendations"]]
     assert recommended_ids == [seoul_ids[2], seoul_ids[4]]
-    assert called_ids == seoul_ids[2:12]
+    assert called_ids == seoul_ids[2:] + seoul_ids[:2]
 
 
 def test_suggest_travel_spots_returns_empty_when_no_accessibility_candidates(

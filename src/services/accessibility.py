@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import socket
-from collections.abc import Iterable, Mapping
+from collections.abc import Mapping
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
@@ -15,14 +15,43 @@ BARRIERFREE_DETAIL_BASE_URL = "https://apis.data.go.kr/B551011/KorWithService2/d
 BARRIERFREE_MOBILE_APP = "kor_travel_recommendation"
 BARRIERFREE_TIMEOUT_SECONDS = 5.0
 
-ELDERLY_KEYWORDS = ("노약자", "고령자", "어르신", "실버", "노인")
-DISABLED_KEYWORDS = ("장애", "휠체어", "점자", "보조견", "장애인", "무장애", "엘리베이터", "경사로")
-CHILD_KEYWORDS = ("유아", "영유아", "수유", "기저귀", "유모차", "어린이", "아동")
-
-ACCESSIBILITY_KEYWORDS_BY_FEATURE = {
-    "elderly": ELDERLY_KEYWORDS,
-    "disabled": DISABLED_KEYWORDS,
-    "child": CHILD_KEYWORDS,
+DISABLED_FIELDS = {
+    "parking",
+    "publictransport",
+    "route",
+    "ticketoffice",
+    "promotion",
+    "wheelchair",
+    "exit",
+    "elevator",
+    "restroom",
+    "guidesystem",
+    "blindhandicapetc",
+    "signguide",
+    "videoguide",
+    "hearingroom",
+    "hearinghandicapetc",
+    "handicapetc",
+    "braileblock",
+    "helpdog",
+    "guidehuman",
+    "audioguide",
+    "bigprint",
+    "brailepromotion",
+}
+ELDERLY_FIELDS = {
+    "publictransport",
+    "route",
+    "wheelchair",
+    "exit",
+    "elevator",
+    "restroom",
+}
+CHILD_FIELDS = {
+    "stroller",
+    "lactationroom",
+    "babysparechair",
+    "infantsfamilyetc",
 }
 
 
@@ -70,38 +99,34 @@ def fetch_barrierfree_detail_items(
     return parse_openapi_items(payload)
 
 
-def _iter_text_values(value: Any) -> Iterable[str]:
+def _has_accessibility_value(value: Any) -> bool:
     if value is None:
-        return
+        return False
     if isinstance(value, str):
-        text = value.strip()
-        if text:
-            yield text
-        return
+        return bool(value.strip())
     if isinstance(value, Mapping):
-        for nested_value in value.values():
-            yield from _iter_text_values(nested_value)
-        return
+        return any(_has_accessibility_value(nested_value) for nested_value in value.values())
     if isinstance(value, list):
-        for nested_value in value:
-            yield from _iter_text_values(nested_value)
-        return
-    text = str(value).strip()
-    if text:
-        yield text
+        return any(_has_accessibility_value(nested_value) for nested_value in value)
+    return bool(str(value).strip())
 
 
-def accessibility_text(items: list[dict[str, Any]]) -> str:
-    return " ".join(text for item in items for text in _iter_text_values(item))
+def _features_from_field_names(items: list[dict[str, Any]]) -> set[str]:
+    features: set[str] = set()
+    for item in items:
+        for field_name, value in item.items():
+            normalized_field_name = str(field_name).strip().lower()
+            if normalized_field_name in DISABLED_FIELDS and _has_accessibility_value(value):
+                features.add("disabled")
+            if normalized_field_name in ELDERLY_FIELDS and _has_accessibility_value(value):
+                features.add("elderly")
+            if normalized_field_name in CHILD_FIELDS and _has_accessibility_value(value):
+                features.add("child")
+    return features
 
 
 def accessibility_features_from_items(items: list[dict[str, Any]]) -> set[str]:
-    text = accessibility_text(items)
-    return {
-        feature
-        for feature, keywords in ACCESSIBILITY_KEYWORDS_BY_FEATURE.items()
-        if any(keyword in text for keyword in keywords)
-    }
+    return _features_from_field_names(items)
 
 
 def filter_recommendations_by_accessibility(
