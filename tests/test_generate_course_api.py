@@ -9,6 +9,7 @@ from conftest import AREA_FALLBACK_IDS
 from src.api import tiny_gru_app
 from src.core.config import COURSE_POIS_PER_DAY
 from src.inference import runtime as runtime_state
+from src.services import travel_service
 
 
 class DummyCourseRuntime:
@@ -44,6 +45,15 @@ class DummyCourseRuntime:
 class FailingCourseRuntime:
     def generate(self, *_args, **_kwargs):
         raise RuntimeError("course decoder exploded")
+
+
+class TrackingCourseRuntime(DummyCourseRuntime):
+    def __init__(self) -> None:
+        self.call_count = 0
+
+    def generate(self, *args, **kwargs):
+        self.call_count += 1
+        return super().generate(*args, **kwargs)
 
 
 def test_generate_travel_returns_fallback_with_content_id_list_prefix(monkeypatch, backend_payload) -> None:
@@ -151,8 +161,119 @@ def test_content_id_list_validation(backend_payload) -> None:
     assert bad_response.status_code == 422
     assert exactly_full_response.status_code == 200
     assert exactly_full_response.json()["content_id_sequence"] == [str(index) for index in range(12)]
-    assert too_long_response.status_code == 400
-    assert too_long_response.json()["detail"] == "contentIdList cannot contain more unique items than the generated course length"
+    assert too_long_response.status_code == 200
+    assert too_long_response.json()["content_id_sequence"] == [str(index) for index in range(13)]
+    assert [step["content_id"] for step in too_long_response.json()["steps"]] == [str(index) for index in range(13)]
+
+
+def test_generate_travel_short_circuits_one_day_over_requested_content_ids(
+    monkeypatch, caplog, backend_payload
+) -> None:
+    runtime = TrackingCourseRuntime()
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", runtime)
+    caplog.set_level(logging.INFO)
+    client = TestClient(tiny_gru_app.app)
+    content_ids = [str(index) for index in range(7)]
+
+    response = client.post(
+        "/generate-course",
+        json={**backend_payload, "travelDuration": "1", "contentIdList": content_ids},
+    )
+
+    assert response.status_code == 200
+    assert runtime.call_count == 0
+    body = response.json()
+    assert body["content_id_sequence"] == content_ids
+    assert [step["content_id"] for step in body["steps"]] == content_ids
+    assert [step["day_index"] for step in body["steps"]] == [1] * 7
+    assert [step["slot_index"] for step in body["steps"]] == list(range(1, 8))
+    assert {step["token_id"] for step in body["steps"]} == {-1}
+    assert {step["score"] for step in body["steps"]} == {0.0}
+    record = next(item for item in caplog.records if item.event == "course_short_circuit_over_requested_content_ids")
+    assert record.input_count == 7
+    assert record.target_count == 6
+
+
+def test_generate_travel_uses_existing_logic_at_exact_target(monkeypatch, backend_payload) -> None:
+    runtime = TrackingCourseRuntime()
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", runtime)
+    client = TestClient(tiny_gru_app.app)
+    content_ids = [str(index) for index in range(6)]
+
+    response = client.post(
+        "/generate-course",
+        json={**backend_payload, "travelDuration": "1", "contentIdList": content_ids},
+    )
+
+    assert response.status_code == 200
+    assert runtime.call_count == 1
+
+
+def test_generate_travel_short_circuit_keeps_all_items_with_last_day_overflow(
+    monkeypatch, backend_payload
+) -> None:
+    runtime = TrackingCourseRuntime()
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", runtime)
+    client = TestClient(tiny_gru_app.app)
+    content_ids = [str(index) for index in range(13)]
+
+    response = client.post(
+        "/generate-course",
+        json={**backend_payload, "travelDuration": "2", "contentIdList": content_ids},
+    )
+
+    assert response.status_code == 200
+    assert runtime.call_count == 0
+    body = response.json()
+    assert body["content_id_sequence"] == content_ids
+    assert [step["content_id"] for step in body["steps"]] == content_ids
+    assert [step["day_index"] for step in body["steps"]] == [1] * 6 + [2] * 7
+    assert [step["slot_index"] for step in body["steps"]] == [1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 7]
+
+
+def test_generate_travel_short_circuit_skips_fallback_when_runtime_unavailable(
+    monkeypatch, backend_payload
+) -> None:
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
+
+    def fail_fallback(*_args, **_kwargs):
+        raise AssertionError("fallback should not run for over-requested contentIdList")
+
+    monkeypatch.setattr(travel_service, "fallback_course_response_or_500", fail_fallback)
+    client = TestClient(tiny_gru_app.app)
+
+    response = client.post(
+        "/generate-course",
+        json={**backend_payload, "travelDuration": "1", "contentIdList": [str(index) for index in range(7)]},
+    )
+
+    assert response.status_code == 200
+
+
+def test_generate_travel_short_circuit_skips_fallback_with_accessibility_flags(
+    monkeypatch, backend_payload
+) -> None:
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
+
+    def fail_fallback(*_args, **_kwargs):
+        raise AssertionError("fallback should not run for over-requested contentIdList")
+
+    monkeypatch.setattr(travel_service, "fallback_course_response_or_500", fail_fallback)
+    client = TestClient(tiny_gru_app.app)
+
+    response = client.post(
+        "/generate-course",
+        json={
+            **backend_payload,
+            "travelDuration": "1",
+            "contentIdList": [str(index) for index in range(7)],
+            "hasDisabled": True,
+            "hasChild": True,
+            "hasElderly": True,
+        },
+    )
+
+    assert response.status_code == 200
 
 
 def test_companion_count_zero_is_accepted(monkeypatch, backend_payload) -> None:

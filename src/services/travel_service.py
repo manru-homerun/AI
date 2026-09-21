@@ -137,6 +137,29 @@ def _course_response_from_payload(content_ids: list[str], steps: list[Any]) -> G
     )
 
 
+def passthrough_over_requested_course_response(content_ids: list[str], trip_days: int) -> GenerateCourseResponse:
+    steps: list[dict[str, Any]] = []
+    last_day_start_index = max((trip_days - 1) * COURSE_POIS_PER_DAY, 0)
+    for index, content_id in enumerate(content_ids):
+        if index < last_day_start_index:
+            day_index = index // COURSE_POIS_PER_DAY + 1
+            slot_index = index % COURSE_POIS_PER_DAY + 1
+        else:
+            day_index = trip_days
+            slot_index = index - last_day_start_index + 1
+        steps.append(
+            {
+                "rank": index + 1,
+                "day_index": day_index,
+                "slot_index": slot_index,
+                "content_id": content_id,
+                "token_id": -1,
+                "score": 0.0,
+            }
+        )
+    return _course_response_from_payload(content_ids, steps)
+
+
 def fallback_course_response(
     area_code: str,
     trip_days: int,
@@ -272,8 +295,26 @@ class TravelService:
 
     def generate_travel_course(self, request: TravelGenerateRequest) -> GenerateCourseResponse:
         try:
-            user_features, trip_days = travel_generate_request_to_user_features(request)
+            trip_days = parse_int_choice("travelDuration", request.travelDuration, {1, 2, 3})
             desired_poi_count = trip_days * COURSE_POIS_PER_DAY
+            if len(request.contentIdList) > desired_poi_count:
+                # Defensive guard while upstream may temporarily send more POIs than the generation target.
+                logger.info(
+                    "course generation short-circuited for over-requested contentIdList",
+                    extra={
+                        "event": "course_short_circuit_over_requested_content_ids",
+                        **_log_context(
+                            endpoint="/generate-course",
+                            area_code=request.areaCode,
+                            trip_days=trip_days,
+                            runtime="shared_next_poi_gru",
+                        ),
+                        "input_count": len(request.contentIdList),
+                        "target_count": desired_poi_count,
+                    },
+                )
+                return passthrough_over_requested_course_response(list(request.contentIdList), trip_days)
+            user_features, trip_days = travel_generate_request_to_user_features(request)
             forced_content_ids = validate_forced_content_ids_fit(request.contentIdList, desired_poi_count)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
