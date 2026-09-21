@@ -445,7 +445,7 @@ def test_suggest_travel_spots_returns_empty_when_no_accessibility_candidates(
     assert response.json()["recommendations"] == []
 
 
-def test_suggest_travel_spots_rejects_invalid_travel_duration(monkeypatch, backend_payload) -> None:
+def test_suggest_travel_spots_falls_back_for_invalid_travel_duration(monkeypatch, backend_payload) -> None:
     monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
     client = TestClient(tiny_gru_app.app)
     payload = {**backend_payload, "travelDuration": "4", "contentIdSequence": AREA_FALLBACK_IDS["11000"][:2]}
@@ -453,7 +453,33 @@ def test_suggest_travel_spots_rejects_invalid_travel_duration(monkeypatch, backe
 
     response = client.post("/recommend", json=payload)
 
-    assert response.status_code == 400
+    assert response.status_code == 200
+    recommended_ids = [item["content_id"] for item in response.json()["recommendations"]]
+    assert recommended_ids == AREA_FALLBACK_IDS["11000"][2:6]
+
+
+def test_suggest_travel_spots_validation_error_uses_central_tourism(
+    monkeypatch, backend_payload
+) -> None:
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
+    monkeypatch.setattr(
+        travel_service,
+        "build_central_tourism_recommendation_payload",
+        lambda area_code, top_k: CENTRAL_TOURISM_RECOMMENDATIONS[:top_k],
+    )
+    client = TestClient(tiny_gru_app.app)
+    payload = {
+        **backend_payload,
+        "travelPersona": 8,
+        "contentIdSequence": AREA_FALLBACK_IDS["11000"][:2],
+    }
+    payload.pop("contentIdList")
+
+    response = client.post("/recommend", json=payload)
+
+    assert response.status_code == 200
+    recommended_ids = [item["content_id"] for item in response.json()["recommendations"]]
+    assert recommended_ids == ["central-1", "central-2", "central-3", "central-4"]
 
 
 def test_suggest_travel_spots_logs_inference_failure_before_fallback(monkeypatch, caplog, backend_payload) -> None:
