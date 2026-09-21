@@ -15,6 +15,7 @@ services:
       DATA_OPENAPI_KEY: ${DATA_OPENAPI_KEY}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       SERVICE_NAME: ${SERVICE_NAME:-travel-ai}
+      QA_TRACE_LOG: ${QA_TRACE_LOG:-false}
       CENTRAL_TOURISM_BASE_YM: ${CENTRAL_TOURISM_BASE_YM:-202504}
       CENTRAL_TOURISM_API_URL: ${CENTRAL_TOURISM_API_URL:-https://apis.data.go.kr/B551011/LocgoHubTarService1/areaBasedList1}
     networks:

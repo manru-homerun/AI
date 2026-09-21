@@ -282,6 +282,74 @@ def test_suggest_travel_spots_uses_shared_runtime_recommendations(monkeypatch, b
     assert set(recommended_ids).isdisjoint(payload["contentIdSequence"])
 
 
+def test_suggest_travel_spots_qa_trace_logs_request_and_model_response(
+    monkeypatch, caplog, backend_payload
+) -> None:
+    monkeypatch.setenv("QA_TRACE_LOG", "true")
+    seoul_ids = AREA_FALLBACK_IDS["11000"]
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", DummySharedRecommendRuntime(recommendations=seoul_ids))
+    caplog.set_level(logging.INFO)
+    client = TestClient(tiny_gru_app.app)
+    payload = {**backend_payload, "contentIdSequence": seoul_ids[:2]}
+    payload.pop("contentIdList")
+
+    response = client.post("/recommend", json=payload)
+
+    assert response.status_code == 200
+    request_record = next(record for record in caplog.records if record.event == "qa_recommend_request_summary")
+    response_record = next(record for record in caplog.records if record.event == "qa_recommend_response_summary")
+    assert request_record.area_code == backend_payload["areaCode"]
+    assert request_record.input_content_ids_count == 2
+    assert request_record.input_content_ids == ",".join(seoul_ids[:2])
+    assert response_record.response_source == "model"
+    assert response_record.recommendation_count == 4
+    assert response_record.recommendation_content_ids == ",".join(seoul_ids[2:6])
+    assert response_record.recommendation_scores
+
+
+def test_suggest_travel_spots_qa_trace_distinguishes_central_tourism_response(
+    monkeypatch, caplog, backend_payload
+) -> None:
+    monkeypatch.setenv("QA_TRACE_LOG", "true")
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", DummySharedRecommendRuntime())
+    monkeypatch.setattr(
+        travel_service,
+        "build_central_tourism_recommendation_payload",
+        lambda area_code, top_k: CENTRAL_TOURISM_RECOMMENDATIONS[:top_k],
+    )
+    caplog.set_level(logging.INFO)
+    client = TestClient(tiny_gru_app.app)
+    payload = {**backend_payload, "contentIdSequence": []}
+    payload.pop("contentIdList")
+
+    response = client.post("/recommend", json=payload)
+
+    assert response.status_code == 200
+    response_record = next(record for record in caplog.records if record.event == "qa_recommend_response_summary")
+    assert response_record.response_source == "central_tourism"
+    assert response_record.fallback_reason == "empty_sequence_central_tourism"
+    assert response_record.recommendation_content_ids == "central-1,central-2,central-3,central-4"
+
+
+def test_suggest_travel_spots_qa_trace_distinguishes_static_fallback_response(
+    monkeypatch, caplog, backend_payload
+) -> None:
+    monkeypatch.setenv("QA_TRACE_LOG", "true")
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
+    caplog.set_level(logging.INFO)
+    client = TestClient(tiny_gru_app.app)
+    payload = {**backend_payload, "contentIdSequence": AREA_FALLBACK_IDS["11000"][:2]}
+    payload.pop("contentIdList")
+
+    response = client.post("/recommend", json=payload)
+
+    assert response.status_code == 200
+    response_record = next(record for record in caplog.records if record.event == "qa_recommend_response_summary")
+    assert response_record.response_source == "static_fallback"
+    assert response_record.fallback_reason == "model_unavailable"
+    assert response_record.recommendation_content_ids == ",".join(AREA_FALLBACK_IDS["11000"][2:6])
+
+
 @pytest.mark.parametrize(
     ("age_group", "expected_age"),
     [

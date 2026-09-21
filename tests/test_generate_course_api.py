@@ -144,6 +144,39 @@ def test_generate_travel_runtime_uses_area_specific_content_ids(monkeypatch, bac
     assert set(content_ids[2:]).issubset(AREA_FALLBACK_IDS["11000"])
 
 
+def test_qa_trace_log_is_disabled_by_default(monkeypatch, caplog, backend_payload) -> None:
+    monkeypatch.delenv("QA_TRACE_LOG", raising=False)
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", DummyCourseRuntime())
+    caplog.set_level(logging.INFO)
+    client = TestClient(tiny_gru_app.app)
+
+    response = client.post("/generate-course", json=backend_payload)
+
+    assert response.status_code == 200
+    assert not [record for record in caplog.records if str(record.event).startswith("qa_")]
+
+
+def test_generate_travel_qa_trace_logs_request_and_model_response(
+    monkeypatch, caplog, backend_payload
+) -> None:
+    monkeypatch.setenv("QA_TRACE_LOG", "true")
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", DummyCourseRuntime())
+    caplog.set_level(logging.INFO)
+    client = TestClient(tiny_gru_app.app)
+
+    response = client.post("/generate-course", json=backend_payload)
+
+    assert response.status_code == 200
+    request_record = next(record for record in caplog.records if record.event == "qa_course_request_summary")
+    response_record = next(record for record in caplog.records if record.event == "qa_course_response_summary")
+    assert request_record.area_code == backend_payload["areaCode"]
+    assert request_record.age_group == backend_payload["ageGroup"]
+    assert request_record.input_content_ids_count == 2
+    assert request_record.input_content_ids == ",".join(backend_payload["contentIdList"])
+    assert response_record.response_source == "model"
+    assert response_record.response_content_ids_count == 12
+
+
 @pytest.mark.parametrize(
     ("age_group", "expected_age"),
     [
@@ -405,6 +438,24 @@ def test_generate_travel_falls_back_for_invalid_travel_duration(backend_payload)
 
     assert response.status_code == 200
     assert response.json()["content_id_sequence"] == AREA_FALLBACK_IDS["11000"][:12]
+
+
+def test_generate_travel_qa_trace_logs_validation_fallback(
+    monkeypatch, caplog, backend_payload
+) -> None:
+    monkeypatch.setenv("QA_TRACE_LOG", "true")
+    caplog.set_level(logging.INFO)
+    client = TestClient(tiny_gru_app.app)
+
+    response = client.post("/generate-course", json={**backend_payload, "travelPersona": 8})
+
+    assert response.status_code == 200
+    request_record = next(record for record in caplog.records if record.event == "qa_course_request_summary")
+    response_record = next(record for record in caplog.records if record.event == "qa_course_response_summary")
+    assert request_record.validation_error_count == 1
+    assert request_record.request_valid is False
+    assert response_record.response_source == "fallback"
+    assert response_record.fallback_reason == "request_validation_error"
 
 
 def test_generate_travel_falls_back_to_default_area_for_invalid_area_code(backend_payload) -> None:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from typing import Any, Mapping, Optional
 
@@ -31,6 +32,7 @@ from src.services.accessibility import filter_recommendations_by_accessibility, 
 logger = get_logger(__name__)
 DEFAULT_FALLBACK_AREA_CODE = "11000"
 DEFAULT_FALLBACK_TRIP_DAYS = 2
+TRUE_ENV_VALUES = {"1", "true", "yes", "on"}
 
 
 def _log_context(
@@ -64,6 +66,114 @@ def _raise_fallback_error(endpoint: str, exc: Exception, log_extra: Mapping[str,
         extra=extra,
     )
     raise HTTPException(status_code=500, detail="fallback response generation failed") from exc
+
+
+def qa_trace_log_enabled() -> bool:
+    return os.environ.get("QA_TRACE_LOG", "").strip().lower() in TRUE_ENV_VALUES
+
+
+def _list_values(value: Any) -> list[Any]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    return [value]
+
+
+def _joined_values(value: Any) -> str:
+    return ",".join(str(item).strip() for item in _list_values(value))
+
+
+def qa_request_summary(endpoint: str, request_or_payload: TravelBackendRequest | Mapping[str, Any]) -> dict[str, Any]:
+    payload = raw_backend_payload(request_or_payload)
+    content_key = "contentIdList" if endpoint == "/generate-course" else "contentIdSequence"
+    content_ids = _list_values(payload.get(content_key))
+    return {
+        "endpoint": endpoint,
+        "area_code": payload.get("areaCode"),
+        "travel_duration": payload.get("travelDuration"),
+        "travel_persona": payload.get("travelPersona"),
+        "age_group": payload.get("ageGroup"),
+        "gender": payload.get("gender"),
+        "traveler_style": payload.get("travelerStyle"),
+        "preferred_area": _joined_values(payload.get("preferredArea")),
+        "residence_area": payload.get("residenceArea"),
+        "has_child": payload.get("hasChild"),
+        "has_elderly": payload.get("hasElderly"),
+        "has_disabled": payload.get("hasDisabled"),
+        "companion_count": payload.get("companionCount"),
+        "input_content_ids_count": len(content_ids),
+        "input_content_ids": _joined_values(content_ids),
+    }
+
+
+def log_qa_request_summary(endpoint: str, request_or_payload: TravelBackendRequest | Mapping[str, Any]) -> None:
+    if not qa_trace_log_enabled():
+        return
+    event = "qa_course_request_summary" if endpoint == "/generate-course" else "qa_recommend_request_summary"
+    logger.info(
+        "QA request summary",
+        extra={"event": event, **qa_request_summary(endpoint, request_or_payload)},
+    )
+
+
+def log_qa_validation_request_summary(
+    endpoint: str,
+    request_or_payload: Mapping[str, Any],
+    validation_error_count: int,
+) -> None:
+    if not qa_trace_log_enabled():
+        return
+    event = "qa_course_request_summary" if endpoint == "/generate-course" else "qa_recommend_request_summary"
+    logger.info(
+        "QA validation request summary",
+        extra={
+            "event": event,
+            **qa_request_summary(endpoint, request_or_payload),
+            "validation_error_count": validation_error_count,
+            "request_valid": False,
+        },
+    )
+
+
+def log_qa_course_response_summary(
+    response: GenerateCourseResponse,
+    response_source: str,
+    fallback_reason: str | None = None,
+) -> None:
+    if not qa_trace_log_enabled():
+        return
+    extra: dict[str, Any] = {
+        "event": "qa_course_response_summary",
+        "endpoint": "/generate-course",
+        "response_source": response_source,
+        "response_content_ids_count": len(response.content_id_sequence),
+        "response_content_ids": _joined_values(response.content_id_sequence),
+    }
+    if fallback_reason is not None:
+        extra["fallback_reason"] = fallback_reason
+    logger.info("QA course response summary", extra=extra)
+
+
+def log_qa_recommend_response_summary(
+    response: RecommendResponse,
+    response_source: str,
+    fallback_reason: str | None = None,
+) -> None:
+    if not qa_trace_log_enabled():
+        return
+    recommendations = response.recommendations
+    extra: dict[str, Any] = {
+        "event": "qa_recommend_response_summary",
+        "endpoint": "/recommend",
+        "response_source": response_source,
+        "recommendation_count": len(recommendations),
+        "recommendation_content_ids": _joined_values([item.content_id for item in recommendations]),
+        "recommendation_scores": _joined_values([round(float(item.score), 6) for item in recommendations]),
+    }
+    if fallback_reason is not None:
+        extra["fallback_reason"] = fallback_reason
+    logger.info("QA recommend response summary", extra=extra)
 
 
 def split_codes(value: str) -> list[str]:
@@ -154,7 +264,7 @@ def invalid_course_input_fallback_response(
         fallback_reason,
         extra=log_extra,
     )
-    return fallback_course_response_or_500(area_code, trip_days, forced_content_ids, log_extra)
+    return fallback_course_response_or_500(area_code, trip_days, forced_content_ids, log_extra, fallback_reason)
 
 
 def invalid_recommend_input_fallback_response(
@@ -185,6 +295,7 @@ def invalid_recommend_input_fallback_response(
         content_id_sequence=content_id_sequence,
         top_k=SETTINGS.backend_recommendation_top_k,
         log_extra=log_extra,
+        fallback_reason=fallback_reason,
     )
 
 
@@ -261,7 +372,9 @@ def passthrough_over_requested_course_response(content_ids: list[str], trip_days
                 "score": 0.0,
             }
         )
-    return _course_response_from_payload(content_ids, steps)
+    response = _course_response_from_payload(content_ids, steps)
+    log_qa_course_response_summary(response, "passthrough")
+    return response
 
 
 def fallback_course_response(
@@ -290,7 +403,10 @@ def fallback_recommend_response(
             log_extra=log_extra,
             logger=logger,
         )
-    return RecommendResponse(recommendations=recommendations[:top_k])
+    response = RecommendResponse(recommendations=recommendations[:top_k])
+    fallback_reason = log_extra.get("fallback_reason") if log_extra is not None else None
+    log_qa_recommend_response_summary(response, "static_fallback", str(fallback_reason) if fallback_reason else None)
+    return response
 
 
 def central_tourism_recommend_response(
@@ -299,6 +415,7 @@ def central_tourism_recommend_response(
     top_k: int,
     log_extra: Mapping[str, Any],
     required_accessibility_features: set[str] | None = None,
+    fallback_reason: str | None = None,
 ) -> RecommendResponse:
     candidate_k = max(top_k, SETTINGS.backend_recommendation_candidate_k)
     try:
@@ -322,7 +439,13 @@ def central_tourism_recommend_response(
             log_extra=log_extra,
             logger=logger,
         )
-    return RecommendResponse(recommendations=recommendations[:top_k])
+    response = RecommendResponse(recommendations=recommendations[:top_k])
+    reason = fallback_reason
+    if reason is None:
+        reason_value = log_extra.get("fallback_reason")
+        reason = str(reason_value) if reason_value else None
+    log_qa_recommend_response_summary(response, "central_tourism", reason)
+    return response
 
 
 def fallback_course_response_or_500(
@@ -330,11 +453,18 @@ def fallback_course_response_or_500(
     trip_days: int,
     forced_content_ids: list[str] | None = None,
     log_extra: Mapping[str, Any] | None = None,
+    fallback_reason: str | None = None,
 ) -> GenerateCourseResponse:
     try:
-        return fallback_course_response(area_code, trip_days, forced_content_ids)
+        response = fallback_course_response(area_code, trip_days, forced_content_ids)
     except Exception as exc:
         _raise_fallback_error("course", exc, log_extra)
+    reason = fallback_reason
+    if reason is None and log_extra is not None:
+        reason_value = log_extra.get("fallback_reason")
+        reason = str(reason_value) if reason_value else None
+    log_qa_course_response_summary(response, "fallback", reason)
+    return response
 
 
 def fallback_recommend_response_or_500(
@@ -398,6 +528,7 @@ class TravelService:
         self.settings = settings
 
     def generate_travel_course(self, request: TravelGenerateRequest) -> GenerateCourseResponse:
+        log_qa_request_summary("/generate-course", request)
         try:
             trip_days = parse_int_choice("travelDuration", request.travelDuration, {1, 2, 3})
             desired_poi_count = trip_days * COURSE_POIS_PER_DAY
@@ -476,7 +607,9 @@ class TravelService:
                 ),
             },
         )
-        return _course_response_from_payload(content_ids, steps)
+        response = _course_response_from_payload(content_ids, steps)
+        log_qa_course_response_summary(response, "model")
+        return response
 
     def suggest_travel_spots(self, request: TravelSpotSuggestionsRequest) -> RecommendResponse:
         try:
@@ -485,6 +618,7 @@ class TravelService:
             return invalid_recommend_input_fallback_response(request)
 
     def recommend_for_backend(self, request: TravelSpotSuggestionsRequest) -> RecommendResponse:
+        log_qa_request_summary("/recommend", request)
         user_features, trip_days = travel_generate_request_to_user_features(request)
         desired_poi_count = trip_days * COURSE_POIS_PER_DAY
         required_features = requested_accessibility_features(
@@ -611,6 +745,9 @@ class TravelService:
                     logger=logger,
                 )
             if len(recommendations) >= self.settings.backend_recommendation_top_k:
+                response = RecommendResponse(
+                    recommendations=recommendations[: self.settings.backend_recommendation_top_k]
+                )
                 logger.info(
                     "recommendation inference succeeded",
                     extra={
@@ -623,9 +760,8 @@ class TravelService:
                         ),
                     },
                 )
-                return RecommendResponse(
-                    recommendations=recommendations[: self.settings.backend_recommendation_top_k]
-                )
+                log_qa_recommend_response_summary(response, "model")
+                return response
             response = RecommendResponse(recommendations=recommendations[: self.settings.backend_recommendation_top_k])
             logger.info(
                 "recommendation inference succeeded",
@@ -639,6 +775,7 @@ class TravelService:
                     ),
                 },
             )
+            log_qa_recommend_response_summary(response, "model")
             return response
         except Exception:
             log_extra = {

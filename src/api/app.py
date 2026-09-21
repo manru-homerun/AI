@@ -17,6 +17,7 @@ from src.inference import runtime as runtime_state
 from src.services.travel_service import (
     invalid_course_input_fallback_response,
     invalid_recommend_input_fallback_response,
+    log_qa_validation_request_summary,
 )
 
 
@@ -89,6 +90,7 @@ async def backend_request_validation_exception_handler(request: Request, exc: Re
             "validation_error_count": len(exc.errors()),
         },
     )
+    log_qa_validation_request_summary(request.url.path, payload, len(exc.errors()))
     if request.url.path == "/generate-course":
         response = invalid_course_input_fallback_response(payload, fallback_reason="request_validation_error")
     else:
