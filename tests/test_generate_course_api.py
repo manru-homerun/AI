@@ -164,19 +164,48 @@ def test_companion_count_zero_is_accepted(monkeypatch, backend_payload) -> None:
     assert response.status_code == 200
 
 
-def test_preferred_area_requires_one_to_three_five_digit_strings(backend_payload) -> None:
+def test_preferred_area_truncates_to_three_five_digit_strings(caplog, backend_payload) -> None:
     client = TestClient(tiny_gru_app.app)
+    caplog.set_level(logging.WARNING)
 
     missing_response = client.post("/generate-course", json={**backend_payload, "preferredArea": []})
-    too_many_response = client.post(
+    overlong_response = client.post(
         "/generate-course",
-        json={**backend_payload, "preferredArea": ["50110", "26350", "11110", "22220"]},
+        json={
+            **backend_payload,
+            "preferredArea": [
+                "11000",
+                "26000",
+                "27000",
+                "28000",
+                "29000",
+                "30000",
+                "31000",
+                "41000",
+                "42000",
+                "43000",
+                "44000",
+                "45000",
+                "46000",
+                "47000",
+                "48000",
+                "50000",
+            ],
+        },
     )
     bad_code_response = client.post("/generate-course", json={**backend_payload, "preferredArea": ["5011A"]})
+    bad_late_code_response = client.post(
+        "/generate-course",
+        json={**backend_payload, "preferredArea": ["50110", "26350", "11110", "bad"]},
+    )
 
     assert missing_response.status_code == 422
-    assert too_many_response.status_code == 422
+    assert overlong_response.status_code == 200
     assert bad_code_response.status_code == 422
+    assert bad_late_code_response.status_code == 422
+    record = next(item for item in caplog.records if item.event == "preferred_area_truncated")
+    assert record.original_count == 16
+    assert record.normalized_count == 3
 
 
 def test_gender_must_use_backend_korean_values(monkeypatch, backend_payload) -> None:

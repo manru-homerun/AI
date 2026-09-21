@@ -5,7 +5,12 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from src.core.logging import get_logger
 from src.fallback.travel import FALLBACK_CONTENT_IDS_BY_AREA
+
+
+logger = get_logger(__name__)
+MAX_PREFERRED_AREA_ITEMS = 3
 
 
 class RecommendRequest(BaseModel):
@@ -66,6 +71,28 @@ class TravelBackendRequest(BaseModel):
         if normalized not in FALLBACK_CONTENT_IDS_BY_AREA:
             raise ValueError(f"areaCode must be one of {sorted(FALLBACK_CONTENT_IDS_BY_AREA)}")
         return normalized
+
+    @field_validator("preferredArea", mode="before")
+    @classmethod
+    def truncate_preferred_area(cls, value: Any) -> Any:
+        if not isinstance(value, list):
+            return value
+        for code in value:
+            if not re.fullmatch(r"\d{5}", str(code)):
+                raise ValueError("preferredArea items must be 5-digit strings")
+        if len(value) <= MAX_PREFERRED_AREA_ITEMS:
+            return value
+        logger.warning(
+            "preferredArea truncated from %s to %s",
+            len(value),
+            MAX_PREFERRED_AREA_ITEMS,
+            extra={
+                "event": "preferred_area_truncated",
+                "original_count": len(value),
+                "normalized_count": MAX_PREFERRED_AREA_ITEMS,
+            },
+        )
+        return value[:MAX_PREFERRED_AREA_ITEMS]
 
     @field_validator("preferredArea")
     @classmethod

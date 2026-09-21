@@ -87,6 +87,44 @@ def test_suggest_travel_spots_returns_four_fallback_items(monkeypatch, backend_p
     assert {item["content_id"] for item in recommendations}.issubset(AREA_FALLBACK_IDS["11000"])
 
 
+def test_suggest_travel_spots_truncates_overlong_preferred_area(
+    monkeypatch, caplog, backend_payload
+) -> None:
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
+    caplog.set_level(logging.WARNING)
+    client = TestClient(tiny_gru_app.app)
+    payload = {
+        **backend_payload,
+        "contentIdSequence": AREA_FALLBACK_IDS["11000"][:2],
+        "preferredArea": [
+            "11000",
+            "26000",
+            "27000",
+            "28000",
+            "29000",
+            "30000",
+            "31000",
+            "41000",
+            "42000",
+            "43000",
+            "44000",
+            "45000",
+            "46000",
+            "47000",
+            "48000",
+            "50000",
+        ],
+    }
+    payload.pop("contentIdList")
+
+    response = client.post("/recommend", json=payload)
+
+    assert response.status_code == 200
+    record = next(item for item in caplog.records if item.event == "preferred_area_truncated")
+    assert record.original_count == 16
+    assert record.normalized_count == 3
+
+
 def test_suggest_travel_spots_logs_model_unavailable_fallback(monkeypatch, caplog, backend_payload) -> None:
     monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
     caplog.set_level(logging.WARNING)
