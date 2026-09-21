@@ -26,6 +26,21 @@ CENTRAL_TOURISM_RECOMMENDATIONS = [
 ]
 
 
+class TrackingSharedRecommendRuntime(DummySharedRecommendRuntime):
+    def __init__(self, recommendations=None) -> None:
+        super().__init__(recommendations=recommendations)
+        self.last_user_features = None
+
+    def recommend(self, *, user_features, area_code, content_id_sequence, top_k):
+        self.last_user_features = user_features
+        return super().recommend(
+            user_features=user_features,
+            area_code=area_code,
+            content_id_sequence=content_id_sequence,
+            top_k=top_k,
+        )
+
+
 def test_central_tourism_api_url_uses_current_locgo_service() -> None:
     assert CENTRAL_TOURISM_API_URL == "https://apis.data.go.kr/B551011/LocgoHubTarService1/areaBasedList1"
 
@@ -265,6 +280,31 @@ def test_suggest_travel_spots_uses_shared_runtime_recommendations(monkeypatch, b
     assert len(recommended_ids) == 4
     assert set(recommended_ids).issubset(seoul_ids)
     assert set(recommended_ids).isdisjoint(payload["contentIdSequence"])
+
+
+@pytest.mark.parametrize(
+    ("age_group", "expected_age"),
+    [
+        ("10", 20),
+        ("59", 50),
+        ("70", 60),
+    ],
+)
+def test_suggest_travel_spots_normalizes_age_group_before_runtime(
+    monkeypatch, backend_payload, age_group, expected_age
+) -> None:
+    seoul_ids = AREA_FALLBACK_IDS["11000"]
+    runtime = TrackingSharedRecommendRuntime(recommendations=seoul_ids)
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", runtime)
+    client = TestClient(tiny_gru_app.app)
+    payload = {**backend_payload, "ageGroup": age_group, "contentIdSequence": seoul_ids[:2]}
+    payload.pop("contentIdList")
+
+    response = client.post("/recommend", json=payload)
+
+    assert response.status_code == 200
+    assert runtime.call_count == 1
+    assert runtime.last_user_features["p0_age"] == expected_age
 
 
 def test_barrierfree_detail_api_uses_content_id_params(monkeypatch) -> None:
