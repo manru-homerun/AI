@@ -175,12 +175,13 @@ def test_generate_travel_normalizes_age_group_before_runtime(
     assert runtime.last_user_features["p0_age"] == expected_age
 
 
-def test_generate_travel_rejects_non_numeric_age_group(backend_payload) -> None:
+def test_generate_travel_falls_back_for_non_numeric_age_group(backend_payload) -> None:
     client = TestClient(tiny_gru_app.app)
 
     response = client.post("/generate-course", json={**backend_payload, "ageGroup": "abc"})
 
-    assert response.status_code == 400
+    assert response.status_code == 200
+    assert response.json()["content_id_sequence"] == AREA_FALLBACK_IDS["11000"][:12]
 
 
 def test_content_id_list_validation(backend_payload) -> None:
@@ -199,7 +200,8 @@ def test_content_id_list_validation(backend_payload) -> None:
 
     assert empty_response.status_code == 200
     assert empty_response.json()["content_id_sequence"] == AREA_FALLBACK_IDS["11000"][:12]
-    assert bad_response.status_code == 422
+    assert bad_response.status_code == 200
+    assert bad_response.json()["content_id_sequence"] == AREA_FALLBACK_IDS["11000"][:12]
     assert exactly_full_response.status_code == 200
     assert exactly_full_response.json()["content_id_sequence"] == [str(index) for index in range(12)]
     assert too_long_response.status_code == 200
@@ -361,16 +363,19 @@ def test_preferred_area_truncates_to_three_five_digit_strings(caplog, backend_pa
         json={**backend_payload, "preferredArea": ["50110", "26350", "11110", "bad"]},
     )
 
-    assert missing_response.status_code == 422
+    assert missing_response.status_code == 200
     assert overlong_response.status_code == 200
-    assert bad_code_response.status_code == 422
-    assert bad_late_code_response.status_code == 422
+    assert bad_code_response.status_code == 200
+    assert bad_late_code_response.status_code == 200
+    assert missing_response.json()["content_id_sequence"] == AREA_FALLBACK_IDS["11000"][:12]
+    assert bad_code_response.json()["content_id_sequence"] == AREA_FALLBACK_IDS["11000"][:12]
+    assert bad_late_code_response.json()["content_id_sequence"] == AREA_FALLBACK_IDS["11000"][:12]
     record = next(item for item in caplog.records if item.event == "preferred_area_truncated")
     assert record.original_count == 16
     assert record.normalized_count == 3
 
 
-def test_gender_must_use_backend_korean_values(monkeypatch, backend_payload) -> None:
+def test_generate_travel_falls_back_for_legacy_gender_value(monkeypatch, backend_payload) -> None:
     monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
     client = TestClient(tiny_gru_app.app)
 
@@ -380,31 +385,35 @@ def test_gender_must_use_backend_korean_values(monkeypatch, backend_payload) -> 
 
     assert male_response.status_code == 200
     assert female_response.status_code == 200
-    assert legacy_response.status_code == 422
+    assert legacy_response.status_code == 200
+    assert legacy_response.json()["content_id_sequence"] == AREA_FALLBACK_IDS["11000"][:12]
 
 
-def test_travel_persona_must_be_between_one_and_seven(backend_payload) -> None:
+def test_generate_travel_falls_back_for_invalid_travel_persona(backend_payload) -> None:
     client = TestClient(tiny_gru_app.app)
 
     response = client.post("/generate-course", json={**backend_payload, "travelPersona": 8})
 
-    assert response.status_code == 422
+    assert response.status_code == 200
+    assert response.json()["content_id_sequence"] == AREA_FALLBACK_IDS["11000"][:12]
 
 
-def test_travel_duration_must_be_one_to_three(backend_payload) -> None:
+def test_generate_travel_falls_back_for_invalid_travel_duration(backend_payload) -> None:
     client = TestClient(tiny_gru_app.app)
 
     response = client.post("/generate-course", json={**backend_payload, "travelDuration": "4"})
 
-    assert response.status_code == 400
+    assert response.status_code == 200
+    assert response.json()["content_id_sequence"] == AREA_FALLBACK_IDS["11000"][:12]
 
 
-def test_area_code_must_be_supported(backend_payload) -> None:
+def test_generate_travel_falls_back_to_default_area_for_invalid_area_code(backend_payload) -> None:
     client = TestClient(tiny_gru_app.app)
 
     response = client.post("/generate-course", json={**backend_payload, "areaCode": "99999"})
 
-    assert response.status_code == 422
+    assert response.status_code == 200
+    assert response.json()["content_id_sequence"] == AREA_FALLBACK_IDS["11000"][:12]
 
 
 def test_health_and_ready_report_degraded_with_503_when_runtimes_are_missing(monkeypatch) -> None:

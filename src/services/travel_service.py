@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from src.core.config import COURSE_POIS_PER_DAY, SETTINGS, Settings
 from src.core.logging import get_logger
 from src.fallback.travel import (
+    FALLBACK_CONTENT_IDS_BY_AREA,
     build_central_tourism_recommendation_payload,
     build_fallback_course_payload,
     build_fallback_recommendation_payload,
@@ -28,6 +29,8 @@ from src.services.accessibility import filter_recommendations_by_accessibility, 
 
 
 logger = get_logger(__name__)
+DEFAULT_FALLBACK_AREA_CODE = "11000"
+DEFAULT_FALLBACK_TRIP_DAYS = 2
 
 
 def _log_context(
@@ -94,6 +97,95 @@ def normalize_age_group(value: Any) -> int:
     if parsed >= 60:
         return 60
     return (parsed // 10) * 10
+
+
+def fallback_area_code_from_value(value: Any) -> str:
+    normalized = str(value).strip()
+    if normalized in FALLBACK_CONTENT_IDS_BY_AREA:
+        return normalized
+    return DEFAULT_FALLBACK_AREA_CODE
+
+
+def fallback_trip_days_from_value(value: Any) -> int:
+    try:
+        return parse_int_choice("travelDuration", str(value), {1, 2, 3})
+    except ValueError:
+        return DEFAULT_FALLBACK_TRIP_DAYS
+
+
+def valid_content_id_values(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    normalized: list[str] = []
+    for content_id in value:
+        text = str(content_id).strip()
+        if text.isdigit():
+            normalized.append(text)
+    return normalized
+
+
+def raw_backend_payload(request_or_payload: TravelBackendRequest | Mapping[str, Any]) -> Mapping[str, Any]:
+    if isinstance(request_or_payload, Mapping):
+        return request_or_payload
+    return request_or_payload.model_dump()
+
+
+def invalid_course_input_fallback_response(
+    request_or_payload: TravelBackendRequest | Mapping[str, Any],
+    fallback_reason: str = "invalid_input",
+) -> GenerateCourseResponse:
+    payload = raw_backend_payload(request_or_payload)
+    area_code = fallback_area_code_from_value(payload.get("areaCode"))
+    trip_days = fallback_trip_days_from_value(payload.get("travelDuration"))
+    desired_poi_count = trip_days * COURSE_POIS_PER_DAY
+    forced_content_ids = valid_content_id_values(payload.get("contentIdList"))[:desired_poi_count]
+    log_extra = {
+        "event": "course_fallback",
+        **_log_context(
+            endpoint="/generate-course",
+            area_code=area_code,
+            trip_days=trip_days,
+            runtime="shared_next_poi_gru",
+            fallback_reason=fallback_reason,
+        ),
+    }
+    logger.warning(
+        "course request input invalid; using fallback course response fallback_reason=%s",
+        fallback_reason,
+        extra=log_extra,
+    )
+    return fallback_course_response_or_500(area_code, trip_days, forced_content_ids, log_extra)
+
+
+def invalid_recommend_input_fallback_response(
+    request_or_payload: TravelBackendRequest | Mapping[str, Any],
+    fallback_reason: str = "invalid_input",
+) -> RecommendResponse:
+    payload = raw_backend_payload(request_or_payload)
+    area_code = fallback_area_code_from_value(payload.get("areaCode"))
+    trip_days = fallback_trip_days_from_value(payload.get("travelDuration"))
+    content_id_sequence = valid_content_id_values(payload.get("contentIdSequence"))
+    log_extra = {
+        "event": "recommend_fallback",
+        **_log_context(
+            endpoint="/recommend",
+            area_code=area_code,
+            trip_days=trip_days,
+            runtime="shared_next_poi_gru",
+            fallback_reason=fallback_reason,
+        ),
+    }
+    logger.warning(
+        "recommendation request input invalid; using central tourism fallback response fallback_reason=%s",
+        fallback_reason,
+        extra=log_extra,
+    )
+    return central_tourism_recommend_response(
+        area_code=area_code,
+        content_id_sequence=content_id_sequence,
+        top_k=SETTINGS.backend_recommendation_top_k,
+        log_extra=log_extra,
+    )
 
 
 def travel_generate_request_to_user_features(request: TravelBackendRequest) -> tuple[dict[str, Any], int]:
@@ -328,8 +420,8 @@ class TravelService:
                 return passthrough_over_requested_course_response(list(request.contentIdList), trip_days)
             user_features, trip_days = travel_generate_request_to_user_features(request)
             forced_content_ids = validate_forced_content_ids_fit(request.contentIdList, desired_poi_count)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except ValueError:
+            return invalid_course_input_fallback_response(request)
 
         if runtime_state.SHARED_RUNTIME is None:
             log_extra = {
@@ -389,8 +481,8 @@ class TravelService:
     def suggest_travel_spots(self, request: TravelSpotSuggestionsRequest) -> RecommendResponse:
         try:
             return self.recommend_for_backend(request)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except ValueError:
+            return invalid_recommend_input_fallback_response(request)
 
     def recommend_for_backend(self, request: TravelSpotSuggestionsRequest) -> RecommendResponse:
         user_features, trip_days = travel_generate_request_to_user_features(request)
