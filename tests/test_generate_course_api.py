@@ -50,9 +50,11 @@ class FailingCourseRuntime:
 class TrackingCourseRuntime(DummyCourseRuntime):
     def __init__(self) -> None:
         self.call_count = 0
+        self.last_user_features = None
 
     def generate(self, *args, **kwargs):
         self.call_count += 1
+        self.last_user_features = kwargs.get("user_features", args[0] if args else None)
         return super().generate(*args, **kwargs)
 
 
@@ -140,6 +142,45 @@ def test_generate_travel_runtime_uses_area_specific_content_ids(monkeypatch, bac
     content_ids = response.json()["content_id_sequence"]
     assert content_ids[:2] == backend_payload["contentIdList"]
     assert set(content_ids[2:]).issubset(AREA_FALLBACK_IDS["11000"])
+
+
+@pytest.mark.parametrize(
+    ("age_group", "expected_age"),
+    [
+        ("-1", 20),
+        ("0", 20),
+        ("10", 20),
+        ("19", 20),
+        ("20", 20),
+        ("20.0", 20),
+        ("25", 20),
+        ("29", 20),
+        ("59", 50),
+        ("60", 60),
+        ("70", 60),
+        ("90", 60),
+    ],
+)
+def test_generate_travel_normalizes_age_group_before_runtime(
+    monkeypatch, backend_payload, age_group, expected_age
+) -> None:
+    runtime = TrackingCourseRuntime()
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", runtime)
+    client = TestClient(tiny_gru_app.app)
+
+    response = client.post("/generate-course", json={**backend_payload, "ageGroup": age_group})
+
+    assert response.status_code == 200
+    assert runtime.call_count == 1
+    assert runtime.last_user_features["p0_age"] == expected_age
+
+
+def test_generate_travel_rejects_non_numeric_age_group(backend_payload) -> None:
+    client = TestClient(tiny_gru_app.app)
+
+    response = client.post("/generate-course", json={**backend_payload, "ageGroup": "abc"})
+
+    assert response.status_code == 400
 
 
 def test_content_id_list_validation(backend_payload) -> None:

@@ -84,9 +84,21 @@ def parse_int_choice(field_name: str, value: str, allowed_values: set[int]) -> i
     return parsed
 
 
+def normalize_age_group(value: Any) -> int:
+    try:
+        parsed = int(float(str(value).strip()))
+    except (OverflowError, ValueError) as exc:
+        raise ValueError("ageGroup must be numeric") from exc
+    if parsed < 20:
+        return 20
+    if parsed >= 60:
+        return 60
+    return (parsed // 10) * 10
+
+
 def travel_generate_request_to_user_features(request: TravelBackendRequest) -> tuple[dict[str, Any], int]:
     trip_days = parse_int_choice("travelDuration", request.travelDuration, {1, 2, 3})
-    p0_age = parse_int_choice("ageGroup", request.ageGroup, {20, 30, 40, 50, 60})
+    p0_age = normalize_age_group(request.ageGroup)
     style_codes = split_codes(request.travelerStyle)
     if len(style_codes) != 1:
         raise ValueError("travelerStyle must contain exactly one code")
