@@ -194,7 +194,7 @@ jobs:
             dc build ai-api || return 1
 
             FAILED_STAGE="rollback ai-api startup"
-            dc up -d --no-deps ai-api || return 1
+            dc up -d --no-deps --force-recreate ai-api || return 1
 
             wait_for_ai_health || return 1
             recreate_nginx || return 1
@@ -206,7 +206,7 @@ jobs:
             dc build ai-api || return 1
 
             FAILED_STAGE="ai-api startup"
-            dc up -d --no-deps ai-api || return 1
+            dc up -d --no-deps --force-recreate ai-api || return 1
 
             wait_for_ai_health || return 1
             recreate_nginx || return 1
