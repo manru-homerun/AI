@@ -18,7 +18,7 @@ jobs:
       HEALTHCHECK_URL: https://${{ secrets.EC2_HOST }}/ready
       SHARED_GRU_ARTIFACT_DIR: /app/artifacts/shared_next_poi_gru_experiment/shared-next-poi-gru-v1
       LOG_LEVEL: ${{ vars.LOG_LEVEL || 'INFO' }}
-      QA_TRACE_LOG: ${{ vars.QA_TRACE_LOG || 'false' }}
+      QA_TRACE_LOG: true
       SERVICE_NAME: travel-ai
       CENTRAL_TOURISM_BASE_YM: "202504"
       CENTRAL_TOURISM_API_URL: https://apis.data.go.kr/B551011/LocgoHubTarService1/areaBasedList1
