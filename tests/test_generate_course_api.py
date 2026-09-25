@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from conftest import AREA_FALLBACK_IDS
 from src.api import tiny_gru_app
+from src.core import alerting
 from src.core.config import COURSE_POIS_PER_DAY
 from src.inference import runtime as runtime_state
 from src.services import travel_service
@@ -79,6 +80,13 @@ def test_generate_travel_returns_fallback_with_content_id_list_prefix(monkeypatc
 
 def test_generate_travel_logs_model_unavailable_fallback(monkeypatch, caplog, backend_payload) -> None:
     monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
+    alert_calls = []
+
+    def spy_notify(*args, **kwargs):
+        alert_calls.append((args, kwargs))
+        return alerting.notify_discord(*args, **kwargs)
+
+    monkeypatch.setattr(travel_service, "notify_discord", spy_notify)
     caplog.set_level(logging.WARNING)
     client = TestClient(tiny_gru_app.app)
 
@@ -92,10 +100,18 @@ def test_generate_travel_logs_model_unavailable_fallback(monkeypatch, caplog, ba
     assert record.trip_days == 2
     assert record.runtime == "shared_next_poi_gru"
     assert record.fallback_reason == "model_unavailable"
+    assert [call[1]["event"] for call in alert_calls] == ["model_unavailable"]
 
 
 def test_generate_travel_logs_inference_error_fallback(monkeypatch, caplog, backend_payload) -> None:
     monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", FailingCourseRuntime())
+    alert_calls = []
+
+    def spy_notify(*args, **kwargs):
+        alert_calls.append((args, kwargs))
+        return alerting.notify_discord(*args, **kwargs)
+
+    monkeypatch.setattr(travel_service, "notify_discord", spy_notify)
     caplog.set_level(logging.ERROR)
     client = TestClient(tiny_gru_app.app)
 
@@ -109,6 +125,7 @@ def test_generate_travel_logs_inference_error_fallback(monkeypatch, caplog, back
     assert record.trip_days == 2
     assert record.runtime == "shared_next_poi_gru"
     assert record.fallback_reason == "inference_error"
+    assert [call[1]["event"] for call in alert_calls] == ["course_inference_failure"]
 
 
 def test_generate_travel_fallback_uses_area_specific_content_ids(monkeypatch, backend_payload) -> None:
@@ -132,6 +149,11 @@ def test_generate_travel_fallback_uses_area_specific_content_ids(monkeypatch, ba
 
 def test_generate_travel_runtime_uses_area_specific_content_ids(monkeypatch, backend_payload) -> None:
     monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", DummyCourseRuntime())
+    monkeypatch.setattr(
+        travel_service,
+        "notify_discord",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("successful inference should not alert")),
+    )
     client = TestClient(tiny_gru_app.app)
 
     response = client.post("/generate-course", json=backend_payload)
@@ -175,7 +197,12 @@ def test_generate_travel_normalizes_age_group_before_runtime(
     assert runtime.last_user_features["p0_age"] == expected_age
 
 
-def test_generate_travel_falls_back_for_non_numeric_age_group(backend_payload) -> None:
+def test_generate_travel_falls_back_for_non_numeric_age_group(monkeypatch, backend_payload) -> None:
+    monkeypatch.setattr(
+        travel_service,
+        "notify_discord",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("invalid input fallback should not alert")),
+    )
     client = TestClient(tiny_gru_app.app)
 
     response = client.post("/generate-course", json={**backend_payload, "ageGroup": "abc"})
@@ -389,7 +416,12 @@ def test_generate_travel_falls_back_for_legacy_gender_value(monkeypatch, backend
     assert legacy_response.json()["content_id_sequence"] == AREA_FALLBACK_IDS["11000"][:12]
 
 
-def test_generate_travel_falls_back_for_invalid_travel_persona(backend_payload) -> None:
+def test_generate_travel_falls_back_for_invalid_travel_persona(monkeypatch, backend_payload) -> None:
+    monkeypatch.setattr(
+        travel_service,
+        "notify_discord",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("validation fallback should not alert")),
+    )
     client = TestClient(tiny_gru_app.app)
 
     response = client.post("/generate-course", json={**backend_payload, "travelPersona": 8})

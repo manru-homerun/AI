@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from conftest import AREA_FALLBACK_IDS, DummySharedRecommendRuntime
 from src.api import tiny_gru_app
+from src.core import alerting
 from src.fallback.travel import (
     CENTRAL_TOURISM_BASE_YM,
     CENTRAL_TOURISM_API_URL,
@@ -142,6 +143,13 @@ def test_suggest_travel_spots_truncates_overlong_preferred_area(
 
 def test_suggest_travel_spots_logs_model_unavailable_fallback(monkeypatch, caplog, backend_payload) -> None:
     monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
+    alert_calls = []
+
+    def spy_notify(*args, **kwargs):
+        alert_calls.append((args, kwargs))
+        return alerting.notify_discord(*args, **kwargs)
+
+    monkeypatch.setattr(travel_service, "notify_discord", spy_notify)
     caplog.set_level(logging.WARNING)
     client = TestClient(tiny_gru_app.app)
     payload = {
@@ -160,6 +168,7 @@ def test_suggest_travel_spots_logs_model_unavailable_fallback(monkeypatch, caplo
     assert record.trip_days == 2
     assert record.runtime == "shared_next_poi_gru"
     assert record.fallback_reason == "model_unavailable"
+    assert [call[1]["event"] for call in alert_calls] == ["model_unavailable"]
 
 
 def test_suggest_travel_spots_empty_sequence_uses_central_tourism_fallback(
@@ -171,6 +180,11 @@ def test_suggest_travel_spots_empty_sequence_uses_central_tourism_fallback(
         travel_service,
         "build_central_tourism_recommendation_payload",
         lambda area_code, top_k: CENTRAL_TOURISM_RECOMMENDATIONS[:top_k],
+    )
+    monkeypatch.setattr(
+        travel_service,
+        "notify_discord",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("normal fallback should not alert")),
     )
     caplog.set_level(logging.INFO)
     client = TestClient(tiny_gru_app.app)
@@ -228,6 +242,11 @@ def test_suggest_travel_spots_full_course_sequence_uses_central_tourism_fallback
         "build_central_tourism_recommendation_payload",
         lambda area_code, top_k: CENTRAL_TOURISM_RECOMMENDATIONS[:top_k],
     )
+    monkeypatch.setattr(
+        travel_service,
+        "notify_discord",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("normal fallback should not alert")),
+    )
 
     caplog.set_level(logging.INFO)
     client = TestClient(tiny_gru_app.app)
@@ -269,6 +288,11 @@ def test_suggest_travel_spots_fallback_uses_area_specific_content_ids(monkeypatc
 def test_suggest_travel_spots_uses_shared_runtime_recommendations(monkeypatch, backend_payload) -> None:
     seoul_ids = AREA_FALLBACK_IDS["11000"]
     monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", DummySharedRecommendRuntime(recommendations=seoul_ids))
+    monkeypatch.setattr(
+        travel_service,
+        "notify_discord",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("successful inference should not alert")),
+    )
     client = TestClient(tiny_gru_app.app)
     payload = {**backend_payload, "contentIdSequence": seoul_ids[:2]}
     payload.pop("contentIdList")
@@ -467,6 +491,11 @@ def test_suggest_travel_spots_validation_error_uses_central_tourism(
         "build_central_tourism_recommendation_payload",
         lambda area_code, top_k: CENTRAL_TOURISM_RECOMMENDATIONS[:top_k],
     )
+    monkeypatch.setattr(
+        travel_service,
+        "notify_discord",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("validation fallback should not alert")),
+    )
     client = TestClient(tiny_gru_app.app)
     payload = {
         **backend_payload,
@@ -485,6 +514,13 @@ def test_suggest_travel_spots_validation_error_uses_central_tourism(
 def test_suggest_travel_spots_logs_inference_failure_before_fallback(monkeypatch, caplog, backend_payload) -> None:
     seoul_ids = AREA_FALLBACK_IDS["11000"]
     monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", DummySharedRecommendRuntime(fail=True))
+    alert_calls = []
+
+    def spy_notify(*args, **kwargs):
+        alert_calls.append((args, kwargs))
+        return alerting.notify_discord(*args, **kwargs)
+
+    monkeypatch.setattr(travel_service, "notify_discord", spy_notify)
     client = TestClient(tiny_gru_app.app)
     payload = {**backend_payload, "contentIdSequence": seoul_ids[:2]}
     payload.pop("contentIdList")
@@ -501,6 +537,43 @@ def test_suggest_travel_spots_logs_inference_failure_before_fallback(monkeypatch
     assert record.trip_days == 2
     assert record.runtime == "shared_next_poi_gru"
     assert record.fallback_reason == "inference_error"
+    assert [call[1]["event"] for call in alert_calls] == ["recommend_inference_failure"]
+
+
+def test_discord_delivery_failure_does_not_change_recommend_fallback_response(
+    monkeypatch, caplog, backend_payload
+) -> None:
+    seoul_ids = AREA_FALLBACK_IDS["11000"]
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", DummySharedRecommendRuntime(fail=True))
+    monkeypatch.setenv(alerting.DISCORD_WEBHOOK_URL_ENV, "https://discord.example/webhook")
+
+    def fail_urlopen(*_args, **_kwargs):
+        raise RuntimeError("discord unavailable")
+
+    monkeypatch.setattr(alerting, "urlopen", fail_urlopen)
+    futures = []
+
+    def spy_notify(*args, **kwargs):
+        future = alerting.notify_discord(*args, **kwargs)
+        futures.append(future)
+        return future
+
+    monkeypatch.setattr(travel_service, "notify_discord", spy_notify)
+    caplog.set_level(logging.WARNING)
+    client = TestClient(tiny_gru_app.app)
+    payload = {**backend_payload, "contentIdSequence": seoul_ids[:2]}
+    payload.pop("contentIdList")
+
+    response = client.post("/recommend", json=payload)
+
+    assert response.status_code == 200
+    assert len(response.json()["recommendations"]) == 4
+    assert futures and futures[0] is not None
+    futures[0].result(timeout=1)
+    assert any(
+        getattr(record, "event", None) == "discord_alert_delivery_failure"
+        for record in caplog.records
+    )
 
 
 def test_recommend_internal_does_not_convert_unexpected_errors_to_400(monkeypatch) -> None:
