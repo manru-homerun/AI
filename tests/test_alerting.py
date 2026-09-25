@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from urllib.error import HTTPError
 
 import pytest
 
@@ -30,6 +31,7 @@ def _fake_success_urlopen(sent):
             {
                 "url": request.full_url,
                 "body": request.data.decode("utf-8"),
+                "user_agent": request.headers.get("User-agent"),
                 "timeout": timeout,
             }
         )
@@ -79,6 +81,7 @@ def test_notify_discord_sends_expected_payload_with_request_id(monkeypatch) -> N
 
     assert sent[0]["url"] == "https://discord.example/webhook"
     assert sent[0]["timeout"] == alerting.DISCORD_TIMEOUT_SECONDS
+    assert sent[0]["user_agent"] == alerting.DISCORD_USER_AGENT
     assert "[HIGH] Travel AI Server Error" in sent[0]["body"]
     assert "recommend_inference_failure" in sent[0]["body"]
     assert "POST /recommend" in sent[0]["body"]
@@ -91,7 +94,13 @@ def test_discord_delivery_failure_is_logged_without_raising(monkeypatch, caplog)
     monkeypatch.setenv(alerting.DISCORD_WEBHOOK_URL_ENV, webhook_url)
 
     def fail_urlopen(*_args, **_kwargs):
-        raise RuntimeError("discord unavailable")
+        raise HTTPError(
+            url=webhook_url,
+            code=404,
+            msg="Not Found",
+            hdrs=None,
+            fp=None,
+        )
 
     monkeypatch.setattr(alerting, "urlopen", fail_urlopen)
     caplog.set_level(logging.WARNING)
@@ -106,7 +115,8 @@ def test_discord_delivery_failure_is_logged_without_raising(monkeypatch, caplog)
     assert future is not None
     future.result(timeout=1)
     record = next(item for item in caplog.records if item.event == "discord_alert_delivery_failure")
-    assert record.error_type == "RuntimeError"
+    assert record.error_type == "HTTPError"
+    assert record.http_status == 404
     assert record.source_event == "course_fallback_failure"
     assert webhook_url not in caplog.text
 

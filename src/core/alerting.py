@@ -9,6 +9,7 @@ import time
 from collections.abc import Mapping
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Any
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from src.core.logging import DEFAULT_SERVICE_NAME, get_logger, get_request_id
@@ -17,6 +18,7 @@ from src.core.logging import DEFAULT_SERVICE_NAME, get_logger, get_request_id
 DISCORD_WEBHOOK_URL_ENV = "DISCORD_WEBHOOK_URL"
 DISCORD_TIMEOUT_SECONDS = 3.0
 DISCORD_ALERT_DEDUPE_TTL_SECONDS = 300.0
+DISCORD_USER_AGENT = "travel-ai-alerting/1.0"
 SEVERITY_RANKS = {
     "HIGH": 10,
     "CRITICAL": 20,
@@ -210,11 +212,27 @@ def _deliver_discord_alert(
         request = Request(
             webhook_url,
             data=body,
-            headers={"Content-Type": "application/json"},
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent": DISCORD_USER_AGENT,
+            },
             method="POST",
         )
         with urlopen(request, timeout=DISCORD_TIMEOUT_SECONDS):
             return
+    except HTTPError as exc:
+        _release_dedupe_key(dedupe_key)
+        _logger.warning(
+            "discord alert delivery failed",
+            extra={
+                "event": "discord_alert_delivery_failure",
+                "alert": False,
+                "alert_severity": "-",
+                "error_type": type(exc).__name__,
+                "http_status": exc.code,
+                "source_event": event,
+            },
+        )
     except Exception as exc:
         _release_dedupe_key(dedupe_key)
         _logger.warning(
