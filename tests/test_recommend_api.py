@@ -469,6 +469,33 @@ def test_suggest_travel_spots_returns_empty_when_no_accessibility_candidates(
     assert response.json()["recommendations"] == []
 
 
+def test_single_accessibility_candidate_failure_does_not_alert(monkeypatch, backend_payload) -> None:
+    seoul_ids = AREA_FALLBACK_IDS["11000"]
+    monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", DummySharedRecommendRuntime(recommendations=seoul_ids))
+    monkeypatch.setattr(
+        travel_service,
+        "notify_discord",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("single accessibility failure should not alert")),
+    )
+
+    def fail_fetch(_content_id):
+        raise RuntimeError("barrier-free API request failed")
+
+    monkeypatch.setattr(accessibility, "fetch_barrierfree_detail_items", fail_fetch)
+    client = TestClient(tiny_gru_app.app)
+    payload = {
+        **backend_payload,
+        "contentIdSequence": seoul_ids[:2],
+        "hasDisabled": True,
+    }
+    payload.pop("contentIdList")
+
+    response = client.post("/recommend", json=payload)
+
+    assert response.status_code == 200
+    assert response.json()["recommendations"] == []
+
+
 def test_suggest_travel_spots_falls_back_for_invalid_travel_duration(monkeypatch, backend_payload) -> None:
     monkeypatch.setattr(runtime_state, "SHARED_RUNTIME", None)
     client = TestClient(tiny_gru_app.app)

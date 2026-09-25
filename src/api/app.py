@@ -12,7 +12,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from src.api.routes.travel import router as travel_router
-from src.core.alerting import begin_alert_context, has_request_alerted, notify_discord, reset_alert_context
+from src.core.alerting import begin_alert_context, notify_discord, reset_alert_context
 from src.core.logging import REQUEST_ID_HEADER, configure_logging, get_logger, reset_request_id, set_request_id
 from src.inference import runtime as runtime_state
 from src.services.travel_service import (
@@ -65,20 +65,19 @@ async def request_context_middleware(request: Request, call_next):
             logger.debug("request failed", exc_info=True, extra=failure_extra)
         else:
             alert_extra = dict(failure_extra)
-            if not has_request_alerted():
-                alert_extra.update({"alert": True, "alert_severity": "CRITICAL"})
-                notify_discord(
-                    event="request_failed",
-                    severity="CRITICAL",
-                    message="request failed with unhandled server error",
-                    context=alert_extra,
-                )
+            alert_extra.update({"alert": True, "alert_severity": "CRITICAL"})
+            notify_discord(
+                event="request_failed",
+                severity="CRITICAL",
+                message="request failed with unhandled server error",
+                context=alert_extra,
+            )
             logger.exception("request failed", extra=alert_extra)
         raise
     else:
         elapsed_ms = round((time.perf_counter() - started_at) * 1000, 2)
         response.headers[REQUEST_ID_HEADER] = request_id
-        if response.status_code >= 500 and endpoint not in HEALTH_ENDPOINTS and not has_request_alerted():
+        if response.status_code >= 500 and endpoint not in HEALTH_ENDPOINTS:
             failure_extra = {
                 "event": "request_failed",
                 "request_id": request_id,

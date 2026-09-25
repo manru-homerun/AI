@@ -4,6 +4,8 @@ import contextvars
 import datetime as dt
 import json
 import os
+import threading
+import time
 from collections.abc import Mapping
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Any
@@ -14,22 +16,32 @@ from src.core.logging import DEFAULT_SERVICE_NAME, get_logger, get_request_id
 
 DISCORD_WEBHOOK_URL_ENV = "DISCORD_WEBHOOK_URL"
 DISCORD_TIMEOUT_SECONDS = 3.0
+DISCORD_ALERT_DEDUPE_TTL_SECONDS = 300.0
+SEVERITY_RANKS = {
+    "HIGH": 10,
+    "CRITICAL": 20,
+}
 
 _logger = get_logger(__name__)
-_request_alerted: contextvars.ContextVar[bool] = contextvars.ContextVar("request_alerted", default=False)
+_request_alert_severity_rank: contextvars.ContextVar[int] = contextvars.ContextVar(
+    "request_alert_severity_rank",
+    default=0,
+)
+_dedupe_lock = threading.Lock()
+_dedupe_expires_at: dict[tuple[str, str, str], float] = {}
 _executor: ThreadPoolExecutor | None = None
 
 
-def begin_alert_context() -> contextvars.Token[bool]:
-    return _request_alerted.set(False)
+def begin_alert_context() -> contextvars.Token[int]:
+    return _request_alert_severity_rank.set(0)
 
 
-def reset_alert_context(token: contextvars.Token[bool]) -> None:
-    _request_alerted.reset(token)
+def reset_alert_context(token: contextvars.Token[int]) -> None:
+    _request_alert_severity_rank.reset(token)
 
 
 def has_request_alerted() -> bool:
-    return _request_alerted.get()
+    return _request_alert_severity_rank.get() > 0
 
 
 def _executor_instance() -> ThreadPoolExecutor:
@@ -45,17 +57,116 @@ def notify_discord(
     message: str,
     context: Mapping[str, Any] | None = None,
 ) -> Future[None] | None:
-    _request_alerted.set(True)
+    normalized_severity = severity.upper()
+    severity_rank = SEVERITY_RANKS.get(normalized_severity, 0)
+    payload_context = dict(context or {})
+    payload_context.setdefault("request_id", get_request_id())
+
+    if _is_request_suppressed(event, normalized_severity, severity_rank, payload_context):
+        return None
+
     webhook_url = os.environ.get(DISCORD_WEBHOOK_URL_ENV)
     if not webhook_url:
         return None
 
-    payload_context = dict(context or {})
-    payload_context.setdefault("request_id", get_request_id())
+    dedupe_key = _dedupe_key(event, payload_context)
+    now = _monotonic()
+    if _is_deduplicated(dedupe_key, now):
+        _log_suppressed(
+            event=event,
+            severity=normalized_severity,
+            context=payload_context,
+            suppression_reason="deduplicated",
+        )
+        return None
+
     payload_context.setdefault("service", os.environ.get("SERVICE_NAME", DEFAULT_SERVICE_NAME))
     payload_context.setdefault("timestamp", dt.datetime.now(tz=dt.timezone.utc).isoformat())
-    payload = _build_discord_payload(event, severity, message, payload_context)
-    return _executor_instance().submit(_deliver_discord_alert, webhook_url, payload, event)
+    payload = _build_discord_payload(event, normalized_severity, message, payload_context)
+    return _executor_instance().submit(_deliver_discord_alert, webhook_url, payload, event, dedupe_key)
+
+
+def _is_request_suppressed(
+    event: str,
+    severity: str,
+    severity_rank: int,
+    context: Mapping[str, Any],
+) -> bool:
+    current_rank = _request_alert_severity_rank.get()
+    if severity_rank <= current_rank:
+        _log_suppressed(
+            event=event,
+            severity=severity,
+            context=context,
+            suppression_reason="request_severity",
+        )
+        return True
+    _request_alert_severity_rank.set(severity_rank)
+    return False
+
+
+def _dedupe_key(event: str, context: Mapping[str, Any]) -> tuple[str, str, str]:
+    return (
+        _normalize_dedupe_value(event),
+        _normalize_dedupe_value(context.get("error_type")),
+        _normalize_dedupe_value(context.get("fallback_reason")),
+    )
+
+
+def _normalize_dedupe_value(value: Any) -> str:
+    text = str(value).strip() if value is not None else ""
+    return text or "-"
+
+
+def _is_deduplicated(dedupe_key: tuple[str, str, str], now: float) -> bool:
+    with _dedupe_lock:
+        _cleanup_expired_locked(now)
+        if dedupe_key in _dedupe_expires_at:
+            return True
+        _dedupe_expires_at[dedupe_key] = now + DISCORD_ALERT_DEDUPE_TTL_SECONDS
+        return False
+
+
+def _release_dedupe_key(dedupe_key: tuple[str, str, str]) -> None:
+    with _dedupe_lock:
+        _dedupe_expires_at.pop(dedupe_key, None)
+
+
+def _cleanup_expired_locked(now: float) -> None:
+    expired_keys = [key for key, expires_at in _dedupe_expires_at.items() if expires_at <= now]
+    for key in expired_keys:
+        del _dedupe_expires_at[key]
+
+
+def _monotonic() -> float:
+    return time.monotonic()
+
+
+def _log_suppressed(
+    *,
+    event: str,
+    severity: str,
+    context: Mapping[str, Any],
+    suppression_reason: str,
+) -> None:
+    _logger.debug(
+        "discord alert suppressed",
+        extra={
+            "event": "discord_alert_suppressed",
+            "alert": False,
+            "alert_severity": severity,
+            "alert_event": event,
+            "suppression_reason": suppression_reason,
+            "error_type": context.get("error_type", "-"),
+            "fallback_reason": context.get("fallback_reason", "-"),
+        },
+    )
+
+
+def reset_alerting_state_for_tests() -> None:
+    _request_alert_severity_rank.set(0)
+    with _dedupe_lock:
+        _dedupe_expires_at.clear()
 
 
 def _build_discord_payload(event: str, severity: str, message: str, context: Mapping[str, Any]) -> dict[str, Any]:
@@ -88,7 +199,12 @@ def _format_alert_value(value: Any) -> str:
     return str(value)
 
 
-def _deliver_discord_alert(webhook_url: str, payload: Mapping[str, Any], event: str) -> None:
+def _deliver_discord_alert(
+    webhook_url: str,
+    payload: Mapping[str, Any],
+    event: str,
+    dedupe_key: tuple[str, str, str],
+) -> None:
     try:
         body = json.dumps(payload).encode("utf-8")
         request = Request(
@@ -100,6 +216,7 @@ def _deliver_discord_alert(webhook_url: str, payload: Mapping[str, Any], event: 
         with urlopen(request, timeout=DISCORD_TIMEOUT_SECONDS):
             return
     except Exception as exc:
+        _release_dedupe_key(dedupe_key)
         _logger.warning(
             "discord alert delivery failed",
             extra={
