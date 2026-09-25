@@ -11,6 +11,23 @@ from typing import Any
 
 DEFAULT_SERVICE_NAME = "travel-ai"
 REQUEST_ID_HEADER = "X-Request-ID"
+COMMON_LOG_FIELDS = (
+    "timestamp",
+    "level",
+    "service",
+    "logger",
+    "request_id",
+    "event",
+    "message",
+    "endpoint",
+    "runtime",
+    "fallback_reason",
+    "error_type",
+    "elapsed_ms",
+    "alert",
+    "alert_severity",
+)
+OPTIONAL_COMMON_LOG_FIELDS = COMMON_LOG_FIELDS[7:]
 
 _request_id: contextvars.ContextVar[str] = contextvars.ContextVar("request_id", default="-")
 
@@ -42,6 +59,9 @@ class RequestContextFilter(logging.Filter):
             record.request_id = get_request_id()
         if not hasattr(record, "event"):
             record.event = "-"
+        for field_name in OPTIONAL_COMMON_LOG_FIELDS:
+            if not hasattr(record, field_name):
+                setattr(record, field_name, "-")
         return True
 
 
@@ -54,6 +74,9 @@ class KeyValueFormatter(logging.Formatter):
             record.request_id = "-"
         if not hasattr(record, "event"):
             record.event = "-"
+        for field_name in OPTIONAL_COMMON_LOG_FIELDS:
+            if not hasattr(record, field_name):
+                setattr(record, field_name, "-")
 
         fields: dict[str, Any] = {
             "timestamp": dt.datetime.fromtimestamp(record.created, tz=dt.timezone.utc).isoformat(),
@@ -63,6 +86,13 @@ class KeyValueFormatter(logging.Formatter):
             "request_id": record.request_id,
             "event": record.event,
             "message": record.message,
+            "endpoint": record.endpoint,
+            "runtime": record.runtime,
+            "fallback_reason": record.fallback_reason,
+            "error_type": record.error_type,
+            "elapsed_ms": record.elapsed_ms,
+            "alert": record.alert,
+            "alert_severity": record.alert_severity,
         }
         for key, value in self._extra_fields(record).items():
             if key not in fields:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.core.alerting import notify_discord
 from src.core.config import SETTINGS, Settings
 from src.core.logging import get_logger
 from src.inference.shared_next_poi import OnnxSharedNextPoiRuntime
@@ -26,7 +27,10 @@ def initialize_runtimes(settings: Settings = SETTINGS) -> None:
         SHARED_RUNTIME_ERROR = None
         RUNTIME_ERROR = None
         COURSE_RUNTIME_ERROR = None
-        logger.info("shared next-POI GRU runtime initialized")
+        logger.info(
+            "shared next-POI GRU runtime initialized",
+            extra={"event": "runtime_initialized", "runtime": "shared_next_poi_gru"},
+        )
     except Exception as exc:
         SHARED_RUNTIME = None
         RUNTIME = None
@@ -34,7 +38,23 @@ def initialize_runtimes(settings: Settings = SETTINGS) -> None:
         SHARED_RUNTIME_ERROR = str(exc)
         RUNTIME_ERROR = str(exc)
         COURSE_RUNTIME_ERROR = str(exc)
-        logger.exception("shared next-POI GRU runtime initialization failed")
+        alert_extra = {
+            "event": "runtime_initialization_failure",
+            "runtime": "shared_next_poi_gru",
+            "error_type": type(exc).__name__,
+            "alert": True,
+            "alert_severity": "CRITICAL",
+        }
+        logger.exception(
+            "shared next-POI GRU runtime initialization failed",
+            extra=alert_extra,
+        )
+        notify_discord(
+            event="runtime_initialization_failure",
+            severity="CRITICAL",
+            message="shared next-POI GRU runtime initialization failed",
+            context=alert_extra,
+        )
 
 
 def is_ready() -> bool:

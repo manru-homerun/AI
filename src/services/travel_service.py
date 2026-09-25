@@ -5,6 +5,7 @@ from typing import Any, Mapping, Optional
 
 from fastapi import HTTPException
 
+from src.core.alerting import notify_discord
 from src.core.config import COURSE_POIS_PER_DAY, SETTINGS, Settings
 from src.core.logging import get_logger
 from src.fallback.travel import (
@@ -43,6 +44,7 @@ def _log_context(
 ) -> dict[str, Any]:
     context: dict[str, Any] = {
         "endpoint": endpoint,
+        "method": "POST",
         "area_code": area_code,
         "runtime": runtime,
     }
@@ -54,10 +56,20 @@ def _log_context(
 
 
 def _raise_fallback_error(endpoint: str, exc: Exception, log_extra: Mapping[str, Any] | None = None) -> None:
-    extra = {"event": f"{endpoint}_fallback_failure", "fallback_reason": "unexpected_error"}
+    extra: dict[str, Any] = {}
     if log_extra is not None:
-        extra.update(log_extra)
+        extra.update(dict(log_extra))
+    extra["event"] = f"{endpoint}_fallback_failure"
     extra["fallback_reason"] = "unexpected_error"
+    extra["error_type"] = type(exc).__name__
+    extra["alert"] = True
+    extra["alert_severity"] = "CRITICAL"
+    notify_discord(
+        event=extra["event"],
+        severity="CRITICAL",
+        message="fallback response generation failed",
+        context=extra,
+    )
     logger.exception(
         "%s fallback response generation failed fallback_reason=unexpected_error",
         endpoint,
@@ -303,10 +315,14 @@ def central_tourism_recommend_response(
     candidate_k = max(top_k, SETTINGS.backend_recommendation_candidate_k)
     try:
         items = build_central_tourism_recommendation_payload(area_code, candidate_k)
-    except Exception:
+    except Exception as exc:
         logger.exception(
             "central tourism fallback failed; using static recommendation response",
-            extra={**log_extra, "event": "recommend_central_tourism_fallback_failure"},
+            extra={
+                **log_extra,
+                "event": "recommend_central_tourism_fallback_failure",
+                "error_type": type(exc).__name__,
+            },
         )
         return fallback_recommend_response_or_500(
             area_code,
@@ -438,6 +454,19 @@ class TravelService:
                 "course runtime unavailable; using fallback course response fallback_reason=model_unavailable",
                 extra=log_extra,
             )
+            alert_extra = {
+                **log_extra,
+                "event": "model_unavailable",
+                "alert": True,
+                "alert_severity": "HIGH",
+            }
+            logger.error("course runtime unavailable", extra=alert_extra)
+            notify_discord(
+                event="model_unavailable",
+                severity="HIGH",
+                message="course runtime unavailable; using fallback course response",
+                context=alert_extra,
+            )
             return fallback_course_response_or_500(request.areaCode, trip_days, forced_content_ids, log_extra)
 
         try:
@@ -448,7 +477,7 @@ class TravelService:
                 duplicate_masking=True,
                 forced_content_ids=forced_content_ids,
             )
-        except Exception:
+        except Exception as exc:
             log_extra = {
                 "event": "course_inference_failure",
                 **_log_context(
@@ -461,7 +490,18 @@ class TravelService:
             }
             logger.exception(
                 "course inference failed; using fallback course response fallback_reason=inference_error",
-                extra=log_extra,
+                extra={
+                    **log_extra,
+                    "error_type": type(exc).__name__,
+                    "alert": True,
+                    "alert_severity": "HIGH",
+                },
+            )
+            notify_discord(
+                event="course_inference_failure",
+                severity="HIGH",
+                message="course inference failed; using fallback course response",
+                context={**log_extra, "error_type": type(exc).__name__, "alert": True, "alert_severity": "HIGH"},
             )
             return fallback_course_response_or_500(request.areaCode, trip_days, forced_content_ids, log_extra)
         logger.info(
@@ -552,6 +592,19 @@ class TravelService:
                 "fallback_reason=model_unavailable",
                 extra=log_extra,
             )
+            alert_extra = {
+                **log_extra,
+                "event": "model_unavailable",
+                "alert": True,
+                "alert_severity": "HIGH",
+            }
+            logger.error("recommendation runtime unavailable", extra=alert_extra)
+            notify_discord(
+                event="model_unavailable",
+                severity="HIGH",
+                message="recommendation runtime unavailable; using fallback recommendation response",
+                context=alert_extra,
+            )
             return fallback_recommend_response_or_500(
                 request.areaCode,
                 request.contentIdSequence,
@@ -640,7 +693,7 @@ class TravelService:
                 },
             )
             return response
-        except Exception:
+        except Exception as exc:
             log_extra = {
                 "event": "recommend_inference_failure",
                 **_log_context(
@@ -654,7 +707,18 @@ class TravelService:
             logger.exception(
                 "recommendation inference failed; using fallback recommendation response "
                 "fallback_reason=inference_error",
-                extra=log_extra,
+                extra={
+                    **log_extra,
+                    "error_type": type(exc).__name__,
+                    "alert": True,
+                    "alert_severity": "HIGH",
+                },
+            )
+            notify_discord(
+                event="recommend_inference_failure",
+                severity="HIGH",
+                message="recommendation inference failed; using fallback recommendation response",
+                context={**log_extra, "error_type": type(exc).__name__, "alert": True, "alert_severity": "HIGH"},
             )
             return fallback_recommend_response_or_500(
                 request.areaCode,

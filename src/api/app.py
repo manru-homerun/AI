@@ -12,6 +12,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from src.api.routes.travel import router as travel_router
+from src.core.alerting import begin_alert_context, notify_discord, reset_alert_context
 from src.core.logging import REQUEST_ID_HEADER, configure_logging, get_logger, reset_request_id, set_request_id
 from src.inference import runtime as runtime_state
 from src.services.travel_service import (
@@ -21,6 +22,7 @@ from src.services.travel_service import (
 
 
 logger = get_logger(__name__)
+HEALTH_ENDPOINTS = {"/live", "/ready", "/health"}
 
 
 @asynccontextmanager
@@ -32,44 +34,83 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 async def request_context_middleware(request: Request, call_next):
     request_id = request.headers.get(REQUEST_ID_HEADER) or str(uuid4())
     token = set_request_id(request_id)
+    alert_token = begin_alert_context()
     started_at = time.perf_counter()
-    logger.info(
+    endpoint = request.url.path
+    access_log_level = "debug" if endpoint in HEALTH_ENDPOINTS else "info"
+    getattr(logger, access_log_level)(
         "request started",
         extra={
             "event": "request_started",
+            "request_id": request_id,
+            "endpoint": endpoint,
             "method": request.method,
-            "path": request.url.path,
+            "path": endpoint,
         },
     )
     try:
         response = await call_next(request)
-    except Exception:
+    except Exception as exc:
         elapsed_ms = round((time.perf_counter() - started_at) * 1000, 2)
-        logger.exception(
-            "request failed",
-            extra={
-                "event": "request_failed",
-                "method": request.method,
-                "path": request.url.path,
-                "elapsed_ms": elapsed_ms,
-            },
-        )
+        failure_extra = {
+            "event": "request_failed",
+            "request_id": request_id,
+            "endpoint": endpoint,
+            "method": request.method,
+            "path": endpoint,
+            "elapsed_ms": elapsed_ms,
+            "error_type": type(exc).__name__,
+        }
+        if endpoint in HEALTH_ENDPOINTS:
+            logger.debug("request failed", exc_info=True, extra=failure_extra)
+        else:
+            alert_extra = dict(failure_extra)
+            alert_extra.update({"alert": True, "alert_severity": "CRITICAL"})
+            notify_discord(
+                event="request_failed",
+                severity="CRITICAL",
+                message="request failed with unhandled server error",
+                context=alert_extra,
+            )
+            logger.exception("request failed", extra=alert_extra)
         raise
     else:
         elapsed_ms = round((time.perf_counter() - started_at) * 1000, 2)
         response.headers[REQUEST_ID_HEADER] = request_id
-        logger.info(
+        if response.status_code >= 500 and endpoint not in HEALTH_ENDPOINTS:
+            failure_extra = {
+                "event": "request_failed",
+                "request_id": request_id,
+                "endpoint": endpoint,
+                "method": request.method,
+                "path": endpoint,
+                "status_code": response.status_code,
+                "elapsed_ms": elapsed_ms,
+                "alert": True,
+                "alert_severity": "CRITICAL",
+            }
+            logger.error("request finished with server error", extra=failure_extra)
+            notify_discord(
+                event="request_failed",
+                severity="CRITICAL",
+                message="request finished with server error",
+                context=failure_extra,
+            )
+        getattr(logger, access_log_level)(
             "request finished",
             extra={
                 "event": "request_finished",
+                "request_id": request_id,
+                "endpoint": endpoint,
                 "method": request.method,
-                "path": request.url.path,
+                "path": endpoint,
                 "status_code": response.status_code,
                 "elapsed_ms": elapsed_ms,
             },
         )
         return response
     finally:
+        reset_alert_context(alert_token)
         reset_request_id(token)
 
 
