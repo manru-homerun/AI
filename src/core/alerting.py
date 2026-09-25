@@ -23,6 +23,34 @@ SEVERITY_RANKS = {
     "HIGH": 10,
     "CRITICAL": 20,
 }
+EVENT_LABELS = {
+    "runtime_initialization_failure": "런타임 초기화 실패",
+    "model_unavailable": "모델 사용 불가",
+    "recommend_inference_failure": "추천 모델 추론 실패",
+    "course_inference_failure": "코스 생성 모델 추론 실패",
+    "recommend_fallback_failure": "추천 fallback 생성 실패",
+    "course_fallback_failure": "코스 fallback 생성 실패",
+    "request_failed": "처리되지 않은 서버 오류",
+}
+EVENT_DESCRIPTIONS = {
+    "runtime_initialization_failure": "모델 런타임 초기화에 실패했습니다. artifact 경로 또는 필수 파일을 확인하세요.",
+    "model_unavailable": "모델 런타임이 로드되지 않아 fallback 응답을 사용 중입니다.",
+    "recommend_inference_failure": "추천 모델 추론 중 오류가 발생했습니다. fallback 추천으로 복구를 시도했습니다.",
+    "course_inference_failure": "코스 생성 모델 추론 중 오류가 발생했습니다. fallback 코스로 복구를 시도했습니다.",
+    "recommend_fallback_failure": "추천 fallback 생성까지 실패했습니다. 사용자 요청이 500으로 실패할 수 있습니다.",
+    "course_fallback_failure": "코스 fallback 생성까지 실패했습니다. 사용자 요청이 500으로 실패할 수 있습니다.",
+    "request_failed": "처리되지 않은 서버 오류입니다. request_id로 서버 로그를 확인하세요.",
+}
+ERROR_TYPE_LABELS = {
+    "FileNotFoundError": "필요한 파일을 찾을 수 없음",
+    "RuntimeError": "런타임 처리 오류",
+    "HTTPError": "외부 HTTP 요청 오류",
+}
+FALLBACK_REASON_LABELS = {
+    "inference_error": "모델 추론 중 오류",
+    "model_unavailable": "모델 사용 불가",
+    "unexpected_error": "예상하지 못한 fallback 실패",
+}
 
 _logger = get_logger(__name__)
 _request_alert_severity_rank: contextvars.ContextVar[int] = contextvars.ContextVar(
@@ -172,18 +200,20 @@ def reset_alerting_state_for_tests() -> None:
 
 
 def _build_discord_payload(event: str, severity: str, message: str, context: Mapping[str, Any]) -> dict[str, Any]:
-    title = f"[{severity}] Travel AI Server Error"
+    title = f"[{severity}] Travel AI 서버 장애 알림"
     fields = [
-        ("Event", event),
-        ("Endpoint", _endpoint_label(context)),
-        ("Request ID", context.get("request_id", "-")),
-        ("Runtime", context.get("runtime", "-")),
-        ("Fallback Reason", context.get("fallback_reason", "-")),
-        ("Error Type", context.get("error_type", "-")),
-        ("Timestamp", context.get("timestamp", "-")),
+        ("장애 유형", _label_with_raw(event, EVENT_LABELS)),
+        ("장애 설명", EVENT_DESCRIPTIONS.get(event, "등록되지 않은 장애 유형입니다. 원문 event를 기준으로 서버 로그를 확인하세요.")),
+        ("엔드포인트", _endpoint_label(context)),
+        ("요청 ID", context.get("request_id", "-")),
+        ("런타임", context.get("runtime", "-")),
+        ("Fallback 사유", _label_with_raw(context.get("fallback_reason"), FALLBACK_REASON_LABELS)),
+        ("예외 타입", _label_with_raw(context.get("error_type"), ERROR_TYPE_LABELS)),
+        ("발생 시각", context.get("timestamp", "-")),
+        ("요약 메시지", message),
     ]
     field_lines = "\n".join(f"**{name}:** {_format_alert_value(value)}" for name, value in fields)
-    content = f"{title}\n\n{field_lines}\n**Message:** {_format_alert_value(message)}"
+    content = f"{title}\n\n{field_lines}\n\n**상세 확인:** 서버 로그에서 request_id로 검색하세요."
     return {"content": content[:2000]}
 
 
@@ -199,6 +229,14 @@ def _format_alert_value(value: Any) -> str:
     if value is None or value == "":
         return "-"
     return str(value)
+
+
+def _label_with_raw(value: Any, labels: Mapping[str, str]) -> str:
+    normalized_value = _format_alert_value(value)
+    label = labels.get(normalized_value)
+    if label is None:
+        return normalized_value
+    return f"{label} ({normalized_value})"
 
 
 def _deliver_discord_alert(

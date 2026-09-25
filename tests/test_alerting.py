@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 from urllib.error import HTTPError
 
@@ -82,11 +83,86 @@ def test_notify_discord_sends_expected_payload_with_request_id(monkeypatch) -> N
     assert sent[0]["url"] == "https://discord.example/webhook"
     assert sent[0]["timeout"] == alerting.DISCORD_TIMEOUT_SECONDS
     assert sent[0]["user_agent"] == alerting.DISCORD_USER_AGENT
-    assert "[HIGH] Travel AI Server Error" in sent[0]["body"]
-    assert "recommend_inference_failure" in sent[0]["body"]
-    assert "POST /recommend" in sent[0]["body"]
-    assert "request-123" in sent[0]["body"]
-    assert "RuntimeError" in sent[0]["body"]
+    content = json.loads(sent[0]["body"])["content"]
+    assert "[HIGH] Travel AI 서버 장애 알림" in content
+    assert "추천 모델 추론 실패 (recommend_inference_failure)" in content
+    assert "모델 추론 중 오류 (inference_error)" in content
+    assert "런타임 처리 오류 (RuntimeError)" in content
+    assert "POST /recommend" in content
+    assert "request-123" in content
+
+
+def test_runtime_initialization_payload_includes_korean_context_and_raw_values(monkeypatch) -> None:
+    sent = []
+    monkeypatch.setenv(alerting.DISCORD_WEBHOOK_URL_ENV, "https://discord.example/webhook")
+    monkeypatch.setattr(alerting, "urlopen", _fake_success_urlopen(sent))
+
+    future = alerting.notify_discord(
+        event="runtime_initialization_failure",
+        severity="CRITICAL",
+        message="shared next-POI GRU runtime initialization failed",
+        context={
+            "runtime": "shared_next_poi_gru",
+            "error_type": "FileNotFoundError",
+            "timestamp": "2026-09-25T06:51:27.275272+00:00",
+        },
+    )
+
+    assert future is not None
+    future.result(timeout=1)
+    content = json.loads(sent[0]["body"])["content"]
+    assert "[CRITICAL] Travel AI 서버 장애 알림" in content
+    assert "런타임 초기화 실패 (runtime_initialization_failure)" in content
+    assert "모델 런타임 초기화에 실패했습니다. artifact 경로 또는 필수 파일을 확인하세요." in content
+    assert "필요한 파일을 찾을 수 없음 (FileNotFoundError)" in content
+    assert "shared_next_poi_gru" in content
+    assert "shared next-POI GRU runtime initialization failed" in content
+
+
+def test_unknown_payload_values_fall_back_to_raw_values(monkeypatch) -> None:
+    sent = []
+    monkeypatch.setenv(alerting.DISCORD_WEBHOOK_URL_ENV, "https://discord.example/webhook")
+    monkeypatch.setattr(alerting, "urlopen", _fake_success_urlopen(sent))
+
+    future = alerting.notify_discord(
+        event="new_unmapped_event",
+        severity="HIGH",
+        message="new failure",
+        context={
+            "fallback_reason": "new_reason",
+            "error_type": "NewError",
+        },
+    )
+
+    assert future is not None
+    future.result(timeout=1)
+    content = json.loads(sent[0]["body"])["content"]
+    assert "new_unmapped_event" in content
+    assert "등록되지 않은 장애 유형입니다" in content
+    assert "new_reason" in content
+    assert "NewError" in content
+
+
+def test_discord_payload_does_not_include_stack_trace(monkeypatch) -> None:
+    sent = []
+    monkeypatch.setenv(alerting.DISCORD_WEBHOOK_URL_ENV, "https://discord.example/webhook")
+    monkeypatch.setattr(alerting, "urlopen", _fake_success_urlopen(sent))
+
+    future = alerting.notify_discord(
+        event="runtime_initialization_failure",
+        severity="CRITICAL",
+        message="shared next-POI GRU runtime initialization failed",
+        context={
+            "error_type": "FileNotFoundError",
+            "exception": "Traceback (most recent call last): secret stack trace",
+        },
+    )
+
+    assert future is not None
+    future.result(timeout=1)
+    content = json.loads(sent[0]["body"])["content"]
+    assert "Traceback" not in content
+    assert "secret stack trace" not in content
 
 
 def test_discord_delivery_failure_is_logged_without_raising(monkeypatch, caplog) -> None:
