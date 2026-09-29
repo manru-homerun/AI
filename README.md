@@ -108,7 +108,7 @@ curl -X POST http://127.0.0.1:8000/recommend \
 
 ## EC2 Docker Deployment
 
-The production deployment uses Nginx, Docker Compose, FastAPI, ONNX Runtime, Prometheus, and node_exporter. PyTorch is not installed in the production image.
+The production deployment uses Nginx, Docker Compose, FastAPI, ONNX Runtime, Prometheus, node_exporter, and Grafana. PyTorch is not installed in the production image.
 
 Target EC2 layout:
 
@@ -137,10 +137,11 @@ docker compose up -d
 docker compose ps
 ```
 
-Only Nginx publishes a host port:
+Only Nginx publishes a non-localhost host port:
 
 ```text
 443 -> nginx
+127.0.0.1:3000 -> grafana
 ai-api:8000 -> Docker internal network only
 prometheus:9090 -> Docker internal network only
 node-exporter:9100 -> Docker internal network only
@@ -154,6 +155,14 @@ node-exporter -> node-exporter:9100/metrics
 ```
 
 Prometheus stores time-series data in the `prometheus-data` Docker volume. The Prometheus UI/API and node_exporter are not published through Nginx or host ports.
+
+Grafana stores application data in the `grafana-data` Docker volume. Grafana provisioning registers the Prometheus data source at `http://prometheus:9090` and loads the default `Travel AI Operations` dashboard on startup. Grafana is bound to EC2 localhost only; use an SSH tunnel from an operator machine:
+
+```bash
+ssh -L 3000:127.0.0.1:3000 <EC2_USER>@<EC2_HOST>
+```
+
+Then open `http://127.0.0.1:3000` locally.
 
 TLS certificates are read from the EC2 host and must never be committed:
 
@@ -184,9 +193,11 @@ EC2_HOST
 EC2_USER
 EC2_SSH_KEY
 EC2_APP_DIR
+GRAFANA_ADMIN_PASSWORD
 ```
 
 `EC2_APP_DIR` is optional and defaults to `/opt/travel-ai`.
+`GRAFANA_ADMIN_PASSWORD` is required because Grafana is configured without a default password fallback.
 
 Security Group baseline:
 
@@ -194,6 +205,7 @@ Security Group baseline:
 443: Oracle Backend Public IP/32
 22: admin IP/32
 8000: no inbound rule
+3000: no inbound rule
 9090: no inbound rule
 9100: no inbound rule
 80: only if the active certificate renewal flow needs HTTP-01
@@ -205,9 +217,11 @@ Deployment verification:
 docker compose ps
 docker compose exec nginx nginx -t
 curl --fail https://13.125.237.207/ready
+curl --head http://127.0.0.1:3000/login
 docker compose exec prometheus promtool query instant http://localhost:9090 'up{job="fastapi"}'
 docker compose exec prometheus promtool query instant http://localhost:9090 'up{job="node-exporter"}'
 docker compose exec prometheus promtool query instant http://localhost:9090 'api_http_requests_total'
+docker compose exec prometheus promtool query instant http://localhost:9090 'histogram_quantile(0.95, sum by (le) (rate(api_http_request_duration_seconds_bucket[5m])))'
 docker compose exec prometheus promtool query instant http://localhost:9090 'node_cpu_seconds_total'
 docker compose exec prometheus promtool query instant http://localhost:9090 'node_memory_MemAvailable_bytes'
 docker compose exec prometheus promtool query instant http://localhost:9090 'node_disk_io_time_seconds_total'

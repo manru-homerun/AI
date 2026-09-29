@@ -71,9 +71,10 @@ jobs:
           REMOTE_CENTRAL_TOURISM_BASE_YM: ${{ env.CENTRAL_TOURISM_BASE_YM }}
           REMOTE_CENTRAL_TOURISM_API_URL: ${{ env.CENTRAL_TOURISM_API_URL }}
           REMOTE_DATA_OPENAPI_KEY: ${{ secrets.DATA_OPENAPI_KEY }}
+          REMOTE_GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
         run: |
           ssh -i ~/.ssh/deploy_key "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" \
-            "EC2_APP_DIR='${REMOTE_EC2_APP_DIR}' GITHUB_SHA='${REMOTE_GITHUB_SHA}' HEALTHCHECK_URL='${REMOTE_HEALTHCHECK_URL}' SHARED_GRU_ARTIFACT_DIR='${REMOTE_SHARED_GRU_ARTIFACT_DIR}' LOG_LEVEL='${REMOTE_LOG_LEVEL}' QA_TRACE_LOG='${REMOTE_QA_TRACE_LOG}' SERVICE_NAME='${REMOTE_SERVICE_NAME}' CENTRAL_TOURISM_BASE_YM='${REMOTE_CENTRAL_TOURISM_BASE_YM}' CENTRAL_TOURISM_API_URL='${REMOTE_CENTRAL_TOURISM_API_URL}' DATA_OPENAPI_KEY='${REMOTE_DATA_OPENAPI_KEY}' bash -s" <<'EOF'
+            "EC2_APP_DIR='${REMOTE_EC2_APP_DIR}' GITHUB_SHA='${REMOTE_GITHUB_SHA}' HEALTHCHECK_URL='${REMOTE_HEALTHCHECK_URL}' SHARED_GRU_ARTIFACT_DIR='${REMOTE_SHARED_GRU_ARTIFACT_DIR}' LOG_LEVEL='${REMOTE_LOG_LEVEL}' QA_TRACE_LOG='${REMOTE_QA_TRACE_LOG}' SERVICE_NAME='${REMOTE_SERVICE_NAME}' CENTRAL_TOURISM_BASE_YM='${REMOTE_CENTRAL_TOURISM_BASE_YM}' CENTRAL_TOURISM_API_URL='${REMOTE_CENTRAL_TOURISM_API_URL}' DATA_OPENAPI_KEY='${REMOTE_DATA_OPENAPI_KEY}' GRAFANA_ADMIN_PASSWORD='${REMOTE_GRAFANA_ADMIN_PASSWORD}' bash -s" <<'EOF'
           set -euo pipefail
 
           APP_DIR="${EC2_APP_DIR}"
@@ -91,11 +92,12 @@ jobs:
             echo "::group::deployment diagnostics"
             echo "failed stage: ${FAILED_STAGE}"
             dc ps || true
-            dc logs --tail=100 ai-api nginx prometheus node-exporter || true
+            dc logs --tail=100 ai-api nginx prometheus node-exporter grafana || true
             docker container inspect travel-ai-api || true
             docker container inspect travel-ai-nginx || true
             docker container inspect travel-ai-prometheus || true
             docker container inspect travel-ai-node-exporter || true
+            docker container inspect travel-ai-grafana || true
             if [ "$(docker container inspect --format='{{.State.Status}}' travel-ai-nginx 2>/dev/null || true)" = "running" ]; then
               docker exec travel-ai-nginx nginx -T || true
             fi
@@ -104,7 +106,7 @@ jobs:
 
           check_legacy_project() {
             FAILED_STAGE="legacy project check"
-            for container in travel-ai-api travel-ai-nginx travel-ai-prometheus travel-ai-node-exporter; do
+            for container in travel-ai-api travel-ai-nginx travel-ai-prometheus travel-ai-node-exporter travel-ai-grafana; do
               if ! docker container inspect "${container}" >/dev/null 2>&1; then
                 continue
               fi
@@ -171,8 +173,14 @@ jobs:
               PROMETHEUS_RESTARTING="$(docker container inspect --format='{{.State.Restarting}}' travel-ai-prometheus 2>/dev/null || echo false)"
               NODE_EXPORTER_STATUS="$(docker container inspect --format='{{.State.Status}}' travel-ai-node-exporter 2>/dev/null || echo missing)"
               NODE_EXPORTER_RESTARTING="$(docker container inspect --format='{{.State.Restarting}}' travel-ai-node-exporter 2>/dev/null || echo false)"
-              echo "travel-ai-prometheus status: ${PROMETHEUS_STATUS}, restarting: ${PROMETHEUS_RESTARTING}; travel-ai-node-exporter status: ${NODE_EXPORTER_STATUS}, restarting: ${NODE_EXPORTER_RESTARTING} (${attempt}/30)"
-              if [ "${PROMETHEUS_STATUS}" = "running" ] && [ "${PROMETHEUS_RESTARTING}" = "false" ] && [ "${NODE_EXPORTER_STATUS}" = "running" ] && [ "${NODE_EXPORTER_RESTARTING}" = "false" ]; then
+              GRAFANA_STATUS="skipped"
+              GRAFANA_RESTARTING="false"
+              if compose_has_service grafana; then
+                GRAFANA_STATUS="$(docker container inspect --format='{{.State.Status}}' travel-ai-grafana 2>/dev/null || echo missing)"
+                GRAFANA_RESTARTING="$(docker container inspect --format='{{.State.Restarting}}' travel-ai-grafana 2>/dev/null || echo false)"
+              fi
+              echo "travel-ai-prometheus status: ${PROMETHEUS_STATUS}, restarting: ${PROMETHEUS_RESTARTING}; travel-ai-node-exporter status: ${NODE_EXPORTER_STATUS}, restarting: ${NODE_EXPORTER_RESTARTING}; travel-ai-grafana status: ${GRAFANA_STATUS}, restarting: ${GRAFANA_RESTARTING} (${attempt}/30)"
+              if [ "${PROMETHEUS_STATUS}" = "running" ] && [ "${PROMETHEUS_RESTARTING}" = "false" ] && [ "${NODE_EXPORTER_STATUS}" = "running" ] && [ "${NODE_EXPORTER_RESTARTING}" = "false" ] && { [ "${GRAFANA_STATUS}" = "skipped" ] || { [ "${GRAFANA_STATUS}" = "running" ] && [ "${GRAFANA_RESTARTING}" = "false" ]; }; }; then
                 STABLE_CHECKS=$((STABLE_CHECKS + 1))
                 if [ "${STABLE_CHECKS}" -ge 3 ]; then
                   return 0
@@ -191,8 +199,13 @@ jobs:
               return 0
             fi
 
+            SERVICES="node-exporter prometheus"
+            if compose_has_service grafana; then
+              SERVICES="${SERVICES} grafana"
+            fi
+
             FAILED_STAGE="monitoring startup"
-            dc up -d --no-deps --force-recreate node-exporter prometheus || return 1
+            dc up -d --no-deps --force-recreate ${SERVICES} || return 1
             wait_for_monitoring_running || return 1
           }
 
