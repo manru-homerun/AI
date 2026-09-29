@@ -1,5 +1,6 @@
 numpy==1.26.4
 pandas==2.3.3
+prometheus-client==0.26.0
 matplotlib==3.9.4
 seaborn==0.13.2
 jupyter==1.1.1

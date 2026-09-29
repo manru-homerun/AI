@@ -1988,6 +1988,7 @@ dependencies = [
     { name = "numpy" },
     { name = "onnxruntime" },
     { name = "pandas" },
+    { name = "prometheus-client" },
     { name = "scikit-learn" },
     { name = "uvicorn" },
 ]
@@ -2012,6 +2013,7 @@ requires-dist = [
     { name = "numpy", specifier = "==1.26.4" },
     { name = "onnxruntime", specifier = "==1.19.2" },
     { name = "pandas", specifier = "==2.3.3" },
+    { name = "prometheus-client", specifier = "==0.26.0" },
     { name = "scikit-learn", specifier = "==1.6.1" },
     { name = "uvicorn", specifier = "==0.34.0" },
 ]
