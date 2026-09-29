@@ -8,6 +8,7 @@ dependencies = [
     "numpy==1.26.4",
     "onnxruntime==1.19.2",
     "pandas==2.3.3",
+    "prometheus-client==0.26.0",
     "scikit-learn==1.6.1",
     "uvicorn==0.34.0",
 ]

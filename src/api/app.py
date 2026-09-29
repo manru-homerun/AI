@@ -9,11 +9,12 @@ from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from src.api.routes.travel import router as travel_router
 from src.core.alerting import begin_alert_context, notify_discord, reset_alert_context
 from src.core.logging import REQUEST_ID_HEADER, configure_logging, get_logger, reset_request_id, set_request_id
+from src.core.metrics import CONTENT_TYPE_LATEST, METRICS_ENDPOINT, metrics_content, record_http_request
 from src.inference import runtime as runtime_state
 from src.services.travel_service import (
     invalid_course_input_fallback_response,
@@ -32,6 +33,9 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 
 async def request_context_middleware(request: Request, call_next):
+    if request.url.path == METRICS_ENDPOINT:
+        return await call_next(request)
+
     request_id = request.headers.get(REQUEST_ID_HEADER) or str(uuid4())
     token = set_request_id(request_id)
     alert_token = begin_alert_context()
@@ -52,6 +56,7 @@ async def request_context_middleware(request: Request, call_next):
         response = await call_next(request)
     except Exception as exc:
         elapsed_ms = round((time.perf_counter() - started_at) * 1000, 2)
+        record_http_request(request, status_code=500, elapsed_seconds=elapsed_ms / 1000)
         failure_extra = {
             "event": "request_failed",
             "request_id": request_id,
@@ -76,6 +81,7 @@ async def request_context_middleware(request: Request, call_next):
         raise
     else:
         elapsed_ms = round((time.perf_counter() - started_at) * 1000, 2)
+        record_http_request(request, status_code=response.status_code, elapsed_seconds=elapsed_ms / 1000)
         response.headers[REQUEST_ID_HEADER] = request_id
         if response.status_code >= 500 and endpoint not in HEALTH_ENDPOINTS:
             failure_extra = {
@@ -140,6 +146,11 @@ async def backend_request_validation_exception_handler(request: Request, exc: Re
 def create_app() -> FastAPI:
     configure_logging()
     app = FastAPI(title="Tiny GRU POI Recommender", lifespan=lifespan)
+
+    @app.get(METRICS_ENDPOINT, include_in_schema=False)
+    def metrics() -> Response:
+        return Response(content=metrics_content(), media_type=CONTENT_TYPE_LATEST)
+
     app.add_exception_handler(RequestValidationError, backend_request_validation_exception_handler)
     app.middleware("http")(request_context_middleware)
     app.include_router(travel_router)
