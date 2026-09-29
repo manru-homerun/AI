@@ -108,7 +108,7 @@ curl -X POST http://127.0.0.1:8000/recommend \
 
 ## EC2 Docker Deployment
 
-The production deployment uses Nginx, Docker Compose, FastAPI, and ONNX Runtime. PyTorch is not installed in the production image.
+The production deployment uses Nginx, Docker Compose, FastAPI, ONNX Runtime, Prometheus, and node_exporter. PyTorch is not installed in the production image.
 
 Target EC2 layout:
 
@@ -142,7 +142,18 @@ Only Nginx publishes a host port:
 ```text
 443 -> nginx
 ai-api:8000 -> Docker internal network only
+prometheus:9090 -> Docker internal network only
+node-exporter:9100 -> Docker internal network only
 ```
+
+Prometheus scrapes targets over the Docker internal `travel-ai` network:
+
+```text
+fastapi       -> ai-api:8000/metrics
+node-exporter -> node-exporter:9100/metrics
+```
+
+Prometheus stores time-series data in the `prometheus-data` Docker volume. The Prometheus UI/API and node_exporter are not published through Nginx or host ports.
 
 TLS certificates are read from the EC2 host and must never be committed:
 
@@ -183,6 +194,8 @@ Security Group baseline:
 443: Oracle Backend Public IP/32
 22: admin IP/32
 8000: no inbound rule
+9090: no inbound rule
+9100: no inbound rule
 80: only if the active certificate renewal flow needs HTTP-01
 ```
 
@@ -192,6 +205,15 @@ Deployment verification:
 docker compose ps
 docker compose exec nginx nginx -t
 curl --fail https://13.125.237.207/ready
+docker compose exec prometheus promtool query instant http://localhost:9090 'up{job="fastapi"}'
+docker compose exec prometheus promtool query instant http://localhost:9090 'up{job="node-exporter"}'
+docker compose exec prometheus promtool query instant http://localhost:9090 'api_http_requests_total'
+docker compose exec prometheus promtool query instant http://localhost:9090 'node_cpu_seconds_total'
+docker compose exec prometheus promtool query instant http://localhost:9090 'node_memory_MemAvailable_bytes'
+docker compose exec prometheus promtool query instant http://localhost:9090 'node_disk_io_time_seconds_total'
+docker compose exec prometheus promtool query instant http://localhost:9090 'node_filesystem_avail_bytes'
+docker compose exec prometheus promtool query instant http://localhost:9090 'node_network_receive_bytes_total'
+docker compose exec prometheus promtool query instant http://localhost:9090 'node_load1'
 ```
 
 ## Dependency Layout

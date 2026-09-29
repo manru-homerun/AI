@@ -91,9 +91,11 @@ jobs:
             echo "::group::deployment diagnostics"
             echo "failed stage: ${FAILED_STAGE}"
             dc ps || true
-            dc logs --tail=100 ai-api nginx || true
+            dc logs --tail=100 ai-api nginx prometheus node-exporter || true
             docker container inspect travel-ai-api || true
             docker container inspect travel-ai-nginx || true
+            docker container inspect travel-ai-prometheus || true
+            docker container inspect travel-ai-node-exporter || true
             if [ "$(docker container inspect --format='{{.State.Status}}' travel-ai-nginx 2>/dev/null || true)" = "running" ]; then
               docker exec travel-ai-nginx nginx -T || true
             fi
@@ -102,7 +104,7 @@ jobs:
 
           check_legacy_project() {
             FAILED_STAGE="legacy project check"
-            for container in travel-ai-api travel-ai-nginx; do
+            for container in travel-ai-api travel-ai-nginx travel-ai-prometheus travel-ai-node-exporter; do
               if ! docker container inspect "${container}" >/dev/null 2>&1; then
                 continue
               fi
@@ -118,6 +120,10 @@ jobs:
                 return 1
               fi
             done
+          }
+
+          compose_has_service() {
+            dc config --services | grep -qx "$1"
           }
 
           wait_for_ai_health() {
@@ -155,6 +161,39 @@ jobs:
               sleep 2
             done
             return 1
+          }
+
+          wait_for_monitoring_running() {
+            FAILED_STAGE="monitoring startup"
+            STABLE_CHECKS=0
+            for attempt in $(seq 1 30); do
+              PROMETHEUS_STATUS="$(docker container inspect --format='{{.State.Status}}' travel-ai-prometheus 2>/dev/null || echo missing)"
+              PROMETHEUS_RESTARTING="$(docker container inspect --format='{{.State.Restarting}}' travel-ai-prometheus 2>/dev/null || echo false)"
+              NODE_EXPORTER_STATUS="$(docker container inspect --format='{{.State.Status}}' travel-ai-node-exporter 2>/dev/null || echo missing)"
+              NODE_EXPORTER_RESTARTING="$(docker container inspect --format='{{.State.Restarting}}' travel-ai-node-exporter 2>/dev/null || echo false)"
+              echo "travel-ai-prometheus status: ${PROMETHEUS_STATUS}, restarting: ${PROMETHEUS_RESTARTING}; travel-ai-node-exporter status: ${NODE_EXPORTER_STATUS}, restarting: ${NODE_EXPORTER_RESTARTING} (${attempt}/30)"
+              if [ "${PROMETHEUS_STATUS}" = "running" ] && [ "${PROMETHEUS_RESTARTING}" = "false" ] && [ "${NODE_EXPORTER_STATUS}" = "running" ] && [ "${NODE_EXPORTER_RESTARTING}" = "false" ]; then
+                STABLE_CHECKS=$((STABLE_CHECKS + 1))
+                if [ "${STABLE_CHECKS}" -ge 3 ]; then
+                  return 0
+                fi
+              else
+                STABLE_CHECKS=0
+              fi
+              sleep 2
+            done
+            return 1
+          }
+
+          reconcile_monitoring_services() {
+            if ! compose_has_service node-exporter || ! compose_has_service prometheus; then
+              echo "monitoring services are not defined in this release; skipping"
+              return 0
+            fi
+
+            FAILED_STAGE="monitoring startup"
+            dc up -d --no-deps --force-recreate node-exporter prometheus || return 1
+            wait_for_monitoring_running || return 1
           }
 
           recreate_nginx() {
@@ -199,6 +238,7 @@ jobs:
             dc up -d --no-deps --force-recreate ai-api || return 1
 
             wait_for_ai_health || return 1
+            reconcile_monitoring_services || return 1
             recreate_nginx || return 1
             echo "rollback completed"
           }
@@ -211,6 +251,7 @@ jobs:
             dc up -d --no-deps --force-recreate ai-api || return 1
 
             wait_for_ai_health || return 1
+            reconcile_monitoring_services || return 1
             recreate_nginx || return 1
             check_external_health || return 1
           }
